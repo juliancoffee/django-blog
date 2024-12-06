@@ -26,7 +26,7 @@ uv run manage.py createsuperuser \
     --noinput
 
 echo "<> running the server"
-export DEBUG=1
+#export DEBUG=1
 #uv run manage.py runserver 0.0.0.0:8000
 uv run gunicorn -w 4 mysite.wsgi --bind 0.0.0.0:8000 &
 # add a pause for gunicorn to start
