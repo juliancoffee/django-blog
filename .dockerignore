@@ -1,0 +1,7 @@
+# ignore .env file
+# p. s. this doesn't do shit it seems, btw
+.env
+
+# we don't need to copy virtual environment, we should build our own
+# p. p. s. idk if this does either
+.venv

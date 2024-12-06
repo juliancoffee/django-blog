@@ -1,0 +1,22 @@
+{% extends "./base.html" %}
+
+{% block content %}
+<pre>{{ post.post_text }}</pre>
+<span>
+    <em> Written: {{ post.pub_date }} </em>
+<span>
+{% if comments %}
+    <ul>
+        {% for comment in comments %}
+            <li>{{ comment.comment_text }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No comments yet 🐾</p>
+{% endif %}
+<form action="{% url 'blog:comment' post.id %}" method="POST">
+{% csrf_token %}
+    <input type="text" id="comment" name="comment">
+    <input type="submit" value="Meow!">
+</form>
+{% endblock %}

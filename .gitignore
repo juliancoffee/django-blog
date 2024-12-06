@@ -1,0 +1,8 @@
+# Python
+__pycache__
+
+# django
+db.sqlite3
+
+# files that are explicitly hidden
+.env

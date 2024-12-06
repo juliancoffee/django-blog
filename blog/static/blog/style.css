@@ -1,0 +1,29 @@
+:root {
+    --pink: #f4cdcd;
+    --red: #662b2b;
+}
+
+li, p, pre, span {
+    background: var(--pink);
+}
+
+li::marker {
+    content: '🐾 ';
+}
+
+a {
+    color: var(--red);
+}
+
+body {
+    background: white url("images/paw-mushroom-40.png");
+}
+
+header {
+    background: var(--pink);
+}
+
+footer {
+    max-width: fit-content;
+    margin: auto;
+}

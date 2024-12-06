@@ -1,0 +1,18 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}My Django blog{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'blog/style.css' %}">
+</head>
+<body>
+    <header>
+        <a href="{% url 'blog:index' %}"> * Blog</a>
+    </header>
+    {% block content %}{% endblock %}
+    <footer>
+        <pre>Made with Django &copy juliancoffee 2024</pre>
+    </footer>
+</body>
+</html>

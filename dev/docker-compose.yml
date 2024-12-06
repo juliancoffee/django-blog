@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    # postgres needs more shared memory, MOAR
+    shm_size: 128mb
+    ports:
+      - 5432:5432
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "dev"
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+volumes:
+  database:
