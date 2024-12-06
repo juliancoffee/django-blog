@@ -33,7 +33,8 @@ match os.environ.get("HOSTED_ON"):
     case None:
         pass
     case hostname:
-        ALLOWED_HOSTS += hostname
+        ALLOWED_HOSTS.append(hostname)
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
