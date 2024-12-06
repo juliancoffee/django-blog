@@ -4,6 +4,9 @@
 # it won't do much at this point, but at least it won't interfere with the app
 echo "" > .env
 
+echo "<> running migrations"
+uv run manage.py migrate
+
 # run Django in the background
 echo "<> static root is: $STATIC_ROOT"
 # I have zero idea why this command is needed
@@ -21,9 +24,6 @@ uv run manage.py createsuperuser \
     --username admin \
     --email admin@example.com \
     --noinput
-
-echo "<> running migrations"
-uv run manage.py migrate
 
 echo "<> running the server"
 #export DEBUG=1
