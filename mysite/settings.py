@@ -29,6 +29,11 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+match os.environ.get("HOSTED_ON"):
+    case None:
+        pass
+    case hostname:
+        ALLOWED_HOSTS += hostname
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
