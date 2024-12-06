@@ -29,11 +29,6 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-match os.environ.get("HOSTED_ON"):
-    case None:
-        pass
-    case hostname:
-        ALLOWED_HOSTS.append(hostname)
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -44,6 +39,12 @@ INTERNAL_IPS = [
 # The issue stems from the fact that I'm using nginx and it somehow breaks
 # the origin headers
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000"]
+match os.environ.get("HOSTED_ON"):
+    case None:
+        pass
+    case hostname:
+        ALLOWED_HOSTS.append(hostname)
+        CSRF_TRUSTED_ORIGINS.append(f"https://{hostname}:8000")
 
 
 # Application definition
@@ -65,8 +66,8 @@ MIDDLEWARE = [
     # yep, it does what it says, it crashes Django
     # "mysite.middleware.CrashMiddleware",
     # this one is for better debugging than out-of-the-box one
-    # "verbose_csrf_middleware.CsrfViewMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    "verbose_csrf_middleware.CsrfViewMiddleware",
+    #"django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
