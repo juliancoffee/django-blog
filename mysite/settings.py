@@ -44,7 +44,7 @@ match os.environ.get("HOSTED_ON"):
         pass
     case hostname:
         ALLOWED_HOSTS.append(hostname)
-        CSRF_TRUSTED_ORIGINS.append(f"https://{hostname}:8000")
+        CSRF_TRUSTED_ORIGINS.append(f"https://{hostname}")
 
 
 # Application definition
