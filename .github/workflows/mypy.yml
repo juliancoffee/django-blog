@@ -2,6 +2,13 @@ name: Mypy
 
 on: [pull_request]
 
+# django's mypy plugin requires live info
+env:
+  SECRET_KEY: "very secret key"
+  DB_PASSWORD: "very secret password"
+  DB_HOST: "very secret host"
+
+
 jobs:
   check:
     runs-on: ubuntu-latest
