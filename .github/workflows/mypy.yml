@@ -1,0 +1,33 @@
+name: Mypy
+
+on: [pull_request]
+
+# django's mypy plugin requires live info
+env:
+  SECRET_KEY: "very secret key"
+  DB_PASSWORD: "very secret password"
+  DB_HOST: "very secret host"
+
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.7"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install the project
+        run: uv sync --all-extras --dev
+
+      - name: Run mypy
+        run: uv run mypy .
