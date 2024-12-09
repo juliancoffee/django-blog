@@ -1,16 +1,14 @@
-name: Mypy
+name: Test
 
 on: [pull_request]
 
-# django's mypy plugin requires live info
 env:
   SECRET_KEY: "very secret key"
   DB_PASSWORD: "very secret password"
   DB_HOST: "very secret host"
 
-
 jobs:
-  typecheck:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -29,5 +27,5 @@ jobs:
       - name: Install the project
         run: uv sync --all-extras --dev
 
-      - name: Run mypy
-        run: uv run mypy .
+      - name: Run tests
+        run: uv run manage.py test
