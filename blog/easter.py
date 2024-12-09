@@ -1,5 +1,6 @@
 import os
 import random
+from unittest import TestResult
 
 from django.test import TestCase
 
@@ -17,7 +18,7 @@ class PredictionGenerator(TestCase):
         ]
     )
 
-    def __call__(self):
+    def __call__(self, result: TestResult | None = None) -> None:
         if os.environ.get("PY_PREDICT") is None:
             return
         self.assertIs(True, False)
