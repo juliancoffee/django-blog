@@ -4,8 +4,6 @@ on: [pull_request]
 
 env:
   SECRET_KEY: "very secret key"
-  DB_PASSWORD: "very secret password"
-  DB_HOST: "very secret host"
 
 jobs:
   test:
