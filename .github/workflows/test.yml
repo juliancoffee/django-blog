@@ -27,6 +27,9 @@ jobs:
         run: |
           ls ${{ github.workspace }}
 
+      - name: YOU SHALL NOT PASS (sommry)
+        run: exit 1
+
       # I guess this should be obvious
       - name: Status
         run: echo "${{ job.status }}"
