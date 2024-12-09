@@ -8,7 +8,7 @@ env:
   DB_HOST: "very secret host"
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
