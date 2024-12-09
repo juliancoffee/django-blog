@@ -3,7 +3,7 @@ name: First Steps
 # this one seems to be optional, but anyway
 run-name: ${{ github.actor }} writes their first Github Action :)
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   check:
@@ -27,5 +27,6 @@ jobs:
         run: |
           ls ${{ github.workspace }}
 
+      # I guess this should be obvious
       - name: Status
         run: echo "${{ job.status }}"
