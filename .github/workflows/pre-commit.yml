@@ -1,0 +1,21 @@
+name: pre-commit
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+
+      - name: Status
+        run: echo "${{ job.status }}"
