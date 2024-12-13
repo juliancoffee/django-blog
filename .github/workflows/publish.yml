@@ -28,13 +28,8 @@ jobs:
           git config user.name ${{ github.actor }}
           git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
           git add requirements.txt
-          git commit -m "Generated requirements.txt"
-          if [ $? -ne 0 ]
-          then
-            git push
-          else
-            echo "no changes"
-          fi
+          git commit -m "Generated requirements.txt" || true
+          git push
     # this one is needed for `git push` to work
     permissions:
       contents: write
