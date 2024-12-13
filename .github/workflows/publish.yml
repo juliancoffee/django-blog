@@ -30,3 +30,6 @@ jobs:
           git add requirements.txt
           git commit -m "Generated requirements.txt"
           git push
+    # this one is needed for `git push` to work
+    permissions:
+      contents: write
