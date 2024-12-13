@@ -1,0 +1,32 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+      - ci/test_release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.7"
+
+      - name: Generate dependency file
+        run: uv pip compile pyproject.toml > requirements.txt
+
+      - name: Commit dependency file
+        # these user.name and user.email where shamelessly copied from
+        # github/actions/checkout docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add requirements.txt
+          git commit -m "Generated requirements.txt"
+          git push
