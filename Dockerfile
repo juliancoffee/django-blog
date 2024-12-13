@@ -1,21 +1,4 @@
-# Ok, so this Docker image combines two processes into one
-#
-# One to run Django and handle requests
-# One to run nginx and server static files
-#
-# I know that Docker hates this kind of stuff, and I sort of hate it too
-# because logs are intermingled now and all that stuff
-#
-# But as I don't want to spin entire infrastructure to host static files
-# this will do
-#
-# Maybe at some point I will spin entire CI/CD thing, but not today
-#
-# so yeah, sorry about that
-FROM nginx:1.27
-
-# get ready to launch nginx
-COPY nginx.conf /etc/nginx/nginx.conf
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 # So I don't actually know if I need to do any of that, really
 # but it doesn't seem to work otherwise, idk
@@ -46,19 +29,18 @@ ARG DJANGO_SUPERUSER_PASSWORD
 ENV SECRET_KEY=${SECRET_KEY}
 ENV DB_PASSWORD=${DB_PASSWORD}
 ENV DB_HOST=${DB_HOST}
-ENV STATIC_ROOT=${STATIC_ROOT}
 ENV DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+# this one is actually only used to clean static files properly :D
+ENV STATIC_ROOT=${STATIC_ROOT}
 
-# Python stuff
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-# p. s. this one copies entire folder
-# and I'm not sure if it follows .dockerignore file
-ADD . /app
+# set the app
 WORKDIR /app
-# init the environment, uv docs told me to do that
-# p. p. s. it seems that I don't need to download Python in dockerfile
-# but maybe I'd rather did it to speed things up
+COPY . /app
+
+# install everything
+#
+# probably could be improved by splitting dependency installs and project
+# installation
 RUN uv sync --frozen
 
-# run both Django and nginx with a single script
 ENTRYPOINT ["/bin/sh", "serve_script.sh"]

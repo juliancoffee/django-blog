@@ -12,20 +12,16 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
   web-proxy:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     ports:
-      - 8000:80
-      # temporary (testing without nginx)
-      - 9000:8000
+      - 8000:8000
       # docker build hates me for this, but docker-compose doesn't seem to mind
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
-      - STATIC_ROOT=/data/static
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      - STATIC_ROOT=./staticfiles
     depends_on:
       - db
 
