@@ -167,12 +167,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-if not DEBUG:
+if not DEBUG and "test" not in sys.argv:
     # that's what WhiteNoise and render.io recommend
     # if used with `manage.py collectstatic`
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-if not DEBUG:
+if not DEBUG and "test" not in sys.argv:
     STORAGES = {
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
