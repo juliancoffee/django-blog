@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - ci/test_release
   workflow_dispatch:
 
 jobs:
@@ -30,7 +29,12 @@ jobs:
           git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
           git add requirements.txt
           git commit -m "Generated requirements.txt"
-          git push
+          if [ $? -ne 0 ]
+          then
+            git push
+          else
+            echo "no changes"
+          fi
     # this one is needed for `git push` to work
     permissions:
       contents: write
