@@ -24,11 +24,9 @@ jobs:
         run: uv pip compile pyproject.toml > requirements.txt
 
       - name: Commit dependency file
-        # these user.name and user.email where shamelessly copied from
-        # github/actions/checkout docs
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name ${{ github.actor }}
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
           git add requirements.txt
           git commit -m "Generated requirements.txt"
           git push
