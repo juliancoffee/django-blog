@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - ci/test_release
+  workflow_dispatch:
 
 jobs:
   publish:
