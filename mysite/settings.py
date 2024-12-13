@@ -62,6 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     # yep, it does what it says, it crashes Django
@@ -165,7 +166,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = os.environ.get("STATIC_ROOT", "staticfiles/")
+
+if not DEBUG and "test" not in sys.argv:
+    # that's what WhiteNoise and render.io recommend
+    # if used with `manage.py collectstatic`
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+if not DEBUG and "test" not in sys.argv:
+    STORAGES = {
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        }
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

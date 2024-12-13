@@ -1,9 +1,5 @@
 # Dockerfile entry point
 
-# empty .env file, because I just can't get rid of it
-# it won't do much at this point, but at least it won't interfere with the app
-echo "" > .env
-
 echo "<> running migrations"
 uv run manage.py migrate
 
@@ -28,10 +24,4 @@ uv run manage.py createsuperuser \
 echo "<> running the server"
 #export DEBUG=1
 #uv run manage.py runserver 0.0.0.0:8000
-uv run gunicorn -w 4 mysite.wsgi --bind 0.0.0.0:8000 &
-# add a pause for gunicorn to start
-sleep 5
-
-# run nginx
-echo "<> run nginx"
-nginx -g 'daemon off;'
+uv run gunicorn -w 4 mysite.wsgi --bind 0.0.0.0:8000
