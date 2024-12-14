@@ -19,7 +19,11 @@ services:
       - key: DB_HOST
         fromDatabase:
           name: mysitedb
-          property: hostport
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: mysitedb
+          property: port
       - key: DB_USER
         fromDatabase:
           name: mysitedb
