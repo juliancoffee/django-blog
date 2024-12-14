@@ -18,7 +18,6 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 ARG SECRET_KEY
 ARG DB_PASSWORD
 ARG DB_HOST
-ARG STATIC_ROOT
 ARG DJANGO_SUPERUSER_PASSWORD
 
 # well, if you want to set environmental variables, you need to set them
@@ -30,8 +29,6 @@ ENV SECRET_KEY=${SECRET_KEY}
 ENV DB_PASSWORD=${DB_PASSWORD}
 ENV DB_HOST=${DB_HOST}
 ENV DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
-# this one is actually only used to clean static files properly :D
-ENV STATIC_ROOT=${STATIC_ROOT}
 
 # set the app
 WORKDIR /app
