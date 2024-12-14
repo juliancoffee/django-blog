@@ -15,4 +15,6 @@ echo "<> creating superuser"
 python manage.py createsuperuser \
     --username admin \
     --email admin@example.com \
-    --noinput
+    --noinput \
+    # supress failures if superuser exists
+    || true
