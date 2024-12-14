@@ -21,6 +21,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      # this one is used in serve_script.sh to clear static folder
       - STATIC_ROOT=./staticfiles
     depends_on:
       - db
