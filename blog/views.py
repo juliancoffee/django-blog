@@ -37,6 +37,22 @@ def detail(request, post_id: int) -> HttpResponse:
 
 
 def comment(request, post_id) -> HttpResponse:
+    def get_user_ip(request):
+        # NOTE: this may panic, but I don't care that much yet
+        # ideally, we would log some error here instead
+        match request.META.get("HTTP_X_FORWARDED_FOR").split(","):
+            case [main_ip, *_]:
+                return main_ip
+            case rest:
+                # TODO: don't do debug prints, do debug logging :P
+                print(rest)
+                # in theory, you could return REMOTE_ADDR here, but
+                # it may as well be localhost or something similar, if
+                # you use any proxies
+                #
+                # which would be pretty useless, so just assume unknown
+                return None
+
     p = get_object_or_404(Post, pk=post_id)
     # p. s. this could be pattern match (or if) on .get()
     try:
@@ -53,7 +69,18 @@ def comment(request, post_id) -> HttpResponse:
             },
         )
     else:
-        p.comment_set.create(comment_text=comment, pub_date=timezone.now())
+        match get_user_ip(request):
+            case None:
+                p.comment_set.create(
+                    comment_text=comment, pub_date=timezone.now()
+                )
+            case ip:
+                p.comment_set.create(
+                    comment_text=comment,
+                    pub_date=timezone.now(),
+                    commenter_ip=ip,
+                )
+
         # Always return an HttpResponseRedirect after successfully dealing
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
