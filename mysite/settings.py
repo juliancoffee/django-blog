@@ -40,13 +40,11 @@ INTERNAL_IPS = [
 # The issue stems from the fact that I'm using nginx and it somehow breaks
 # the origin headers
 CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000"]
-match os.environ.get("HOSTED_ON"):
-    case None:
-        pass
-    case hostname:
-        ALLOWED_HOSTS.append(hostname)
-        CSRF_TRUSTED_ORIGINS.append(f"https://{hostname}")
 
+EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(EXTERNAL_HOSTNAME)
+    CSRF_TRUSTED_ORIGINS.append(EXTERNAL_HOSTNAME)
 
 # Application definition
 
