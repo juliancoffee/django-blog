@@ -1,0 +1,40 @@
+databases:
+  - name: mysitedb
+    plan: free
+    databaseName: mysite
+    user: mysite
+
+services:
+  - type: web
+    plan: free
+    name: juliancoffee-django-blog
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "python -m gunicorn -w 4 mysite.wsgi --bind 0.0.0.0:8000"
+    envVars:
+      # the one and only django secret key
+      - key: SECRET_KEY
+        generateValue: true
+      # db stuff
+      - key: DB_HOST
+        fromDatabase:
+          name: mysitedb
+          property: hostport
+      - key: DB_USER
+        fromDatabase:
+          name: mysitedb
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: mysitedb
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: mysitedb
+          property: database
+      # for createsuperuser
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true
+      # hints Render to listen on this port
+      - key: PORT
+        value: 8000
