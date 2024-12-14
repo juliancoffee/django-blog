@@ -38,16 +38,19 @@ def detail(request, post_id: int) -> HttpResponse:
 
 def comment(request, post_id) -> HttpResponse:
     def get_user_ip(request):
+        # NOTE: this may panic, but I don't care that much yet
+        # ideally, we would log some error here
         match request.META.get("HTTP_X_FORWARDED_FOR").split(","):
-            case [x, _] | [x]:
-                return x
+            case [main_ip, *other]:
+                return main_ip
             case rest:
+                # TODO: don't do debug prints, do debug logging :P
+                print(rest)
                 # in theory, you could return REMOTE_ADDR here, but
                 # it may as well be localhost or something similar, if
                 # you use any proxies
                 #
-                # which would be pretty useless
-                print(rest)
+                # which would be pretty useless, so just assume unknown
                 return None
 
     p = get_object_or_404(Post, pk=post_id)
