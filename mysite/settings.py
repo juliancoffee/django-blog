@@ -64,7 +64,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     # yep, it does what it says, it crashes Django
-    # "mysite.middleware.CrashMiddleware",
+    "mysite.middleware.CrashMiddleware",
     # this one is for better debugging than out-of-the-box one
     # "verbose_csrf_middleware.CsrfViewMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
