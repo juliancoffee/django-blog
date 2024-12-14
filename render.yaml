@@ -10,7 +10,7 @@ services:
     name: juliancoffee-django-blog
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "./renderstart.sh"
+    startCommand: "./hoststart.sh"
     envVars:
       # the one and only django secret key
       - key: SECRET_KEY
