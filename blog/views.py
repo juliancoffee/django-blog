@@ -39,9 +39,9 @@ def detail(request, post_id: int) -> HttpResponse:
 def comment(request, post_id) -> HttpResponse:
     def get_user_ip(request):
         # NOTE: this may panic, but I don't care that much yet
-        # ideally, we would log some error here
+        # ideally, we would log some error here instead
         match request.META.get("HTTP_X_FORWARDED_FOR").split(","):
-            case [main_ip, *other]:
+            case [main_ip, *_]:
                 return main_ip
             case rest:
                 # TODO: don't do debug prints, do debug logging :P
