@@ -223,7 +223,7 @@ i imagine it would be annoying to change all these if I rename\
 
     # ok, this one is here just to see if it works, I love Python
     # p. s. yes, it does count as a test
-    test_published_dynamic = lambda self: self.assertIs(True, True)  # noqa: E731
+    test_published_dynamic = lambda self: self.assertIs(True, True)
     # this one is more real, but still just for fun, of course
     # don't worry, this one shouldn't run until you set PY_PREDICT variable
     test_predictor = PredictionGenerator()

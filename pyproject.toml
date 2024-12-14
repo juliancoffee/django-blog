@@ -67,4 +67,6 @@ ignore = [
     "RUF012",
     # ruff should re-format long lines anyway, if possible
     "E501",
+    # because this one is annoying
+    "E731",
 ]
