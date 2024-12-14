@@ -10,7 +10,7 @@ services:
     name: juliancoffee-django-blog
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "python -m gunicorn -w 4 mysite.wsgi --bind 0.0.0.0:8000"
+    startCommand: "./renderstart.sh"
     envVars:
       # the one and only django secret key
       - key: SECRET_KEY
