@@ -37,6 +37,8 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     comment_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField("publishing date")
+    # I think 100 characters should be enough for ip addr
+    commenter_ip = models.CharField(max_length=100, default="<anon>")
 
     def __str__(self) -> str:
         return self.comment_text
