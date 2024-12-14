@@ -38,7 +38,7 @@ def detail(request, post_id: int) -> HttpResponse:
 
 def comment(request, post_id) -> HttpResponse:
     def get_user_ip(request):
-        match request.META.get("HTTP_X_FORWARED_FOR").split(","):
+        match request.META.get("HTTP_X_FORWARDED_FOR").split(","):
             case [x, _] | [x]:
                 return x
             case _:
