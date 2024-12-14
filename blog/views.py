@@ -41,12 +41,13 @@ def comment(request, post_id) -> HttpResponse:
         match request.META.get("HTTP_X_FORWARDED_FOR").split(","):
             case [x, _] | [x]:
                 return x
-            case _:
+            case rest:
                 # in theory, you could return REMOTE_ADDR here, but
                 # it may as well be localhost or something similar, if
                 # you use any proxies
                 #
                 # which would be pretty useless
+                print(rest)
                 return None
 
     p = get_object_or_404(Post, pk=post_id)
