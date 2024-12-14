@@ -4,18 +4,14 @@ echo "<> running migrations"
 uv run manage.py migrate
 
 # run Django in the background
-echo "<> static root is: $STATIC_ROOT"
-# I have zero idea why this command is needed
-# I'd expect docker to spin a fresh new image without old data, but idk
-# so I do this just in case
-if [ -d "$STATIC_ROOT" ]
-then
-    echo "<> $STATIC_ROOT is dirty, cleaning it"
-    rm -rf "$STATIC_ROOT"
-fi
-uv run manage.py collectstatic
+echo "<> collecting statics"
+# noinput here should also ignore any warnings
+# like if staticfile folder is already present and it asks to overwrite
+uv run manage.py collectstatic --no-input
 
 echo "<> creating superuser"
+# noinput here also means that password is taken from env variable
+# DJANGO_SUPERUSER_PASSWORD
 uv run manage.py createsuperuser \
     --username admin \
     --email admin@example.com \
