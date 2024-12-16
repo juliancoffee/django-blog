@@ -30,14 +30,26 @@ ENV DB_PASSWORD=${DB_PASSWORD}
 ENV DB_HOST=${DB_HOST}
 ENV DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
 
-# set the app
+# set up the app
 WORKDIR /app
-COPY . /app
 
-# install everything
+# install dependencies first, for better caching behaviour
+# recommended by uv and Docker best practices
 #
-# probably could be improved by splitting dependency installs and project
-# installation
-RUN uv sync --frozen
+# note that we're using bind here, so no files will be persisted into image
+# layers, at least at this stage
+#
+# the practical effect of this is that if dependencies don't change the layer
+# gets cached, which speeds up the building process A LOT, since this is the
+# task that consumes the most of it
+#
+# --frozen means "don't update lockfile" btw
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
+
+# now install the rest of the project (without dev dependencies)
+COPY . /app
+RUN uv sync --frozen --no-dev
 
 ENTRYPOINT ["/bin/sh", "serve_script.sh"]
