@@ -1,8 +1,9 @@
 import logging
+import pprint
 
 from django.http import (
-    HttpResponse,
     HttpRequest,
+    HttpResponse,
     HttpResponseRedirect,
 )
 from django.shortcuts import get_object_or_404, render
@@ -12,6 +13,8 @@ from django.utils import timezone
 from .models import Post
 
 logger = logging.getLogger()
+
+pf = pprint.pformat
 
 
 # Create your views here.
@@ -43,7 +46,7 @@ def detail(request, post_id: int) -> HttpResponse:
 
 def comment(request: HttpRequest, post_id) -> HttpResponse:
     def get_user_ip(request: HttpRequest):
-        """Get user ip from HTTP_X_FORWARDER_FOR header
+        """Get user ip from HTTP_X_FORWARDED_FOR header
 
         If no such header found or unable to parse it, returns None.
         """
@@ -54,15 +57,20 @@ def comment(request: HttpRequest, post_id) -> HttpResponse:
         ip_chain = request.META.get("HTTP_X_FORWARDED_FOR")
         if ip_chain is None:
             logger.error(
-                f"No HTTP_X_FORWARDER_FOR header found: meta={request.META}"
+                "No HTTP_X_FORWARDED_FOR header found: meta={meta}".format(
+                    meta=pf(request.META)
+                )
             )
             return None
 
         match ip_chain.split(","):
-            case [main_ip, *_]:
+            case [main_ip, *_] if main_ip:
                 return main_ip
-            case rest:
-                logger.error(f"Unexpected HTTP_X_FORWARDER_FOR split: {rest}")
+            case _split:
+                err_msg = (
+                    f"Unexpected HTTP_X_FORWARDED_FOR={ip_chain!r}: {_split=}"
+                )
+                logger.error(err_msg)
                 return None
 
     p = get_object_or_404(Post, pk=post_id)
@@ -70,7 +78,9 @@ def comment(request: HttpRequest, post_id) -> HttpResponse:
     try:
         comment = request.POST["comment"]
     except KeyError:
-        logger.error(f"Couldn't find comment in the form: POST={request.POST}")
+        logger.error(
+            f"Couldn't find comment in the form: POST={pf(request.POST.dict())}"
+        )
         return render(
             request,
             "blog/detail.html",
