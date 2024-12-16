@@ -1,5 +1,6 @@
 import logging
 import pprint
+from collections.abc import Sequence
 
 from django.http import (
     HttpRequest,
@@ -63,7 +64,8 @@ def comment(request: HttpRequest, post_id) -> HttpResponse:
             )
             return None
 
-        match ip_chain.split(","):
+        chain: Sequence[str] = ip_chain.split(",")
+        match chain:
             case [main_ip, *_] if main_ip:
                 return main_ip
             case _split:
