@@ -1,18 +1,27 @@
 # Dockerfile entry point
 
-echo "<> running migrations"
-uv run manage.py migrate
+echo "<> collect static files"
+# Ok
+#
+# we could put this into Dockerfile, yes
+#
+# but it will run basically each time anyway, because it's impossible to cache
+# as it requires basically whole project and everything after `COPY . .` will
+# be invalidated
+#
+# add to this that django does its management work on first command invocation
+# and it takes about 7 seconds of "something"
+#
+# it sucks, but then again, maybe 7 seconds isn't that big of a deal?
+time uv run manage.py collectstatic --no-input
 
-# run Django in the background
-echo "<> collecting statics"
-# noinput here should also ignore any warnings
-# like if staticfile folder is already present and it asks to overwrite
-uv run manage.py collectstatic --no-input
+echo "<> running migrations"
+time uv run manage.py migrate
 
 echo "<> creating superuser"
 # noinput here also means that password is taken from env variable
 # DJANGO_SUPERUSER_PASSWORD
-uv run manage.py createsuperuser \
+time uv run manage.py createsuperuser \
     --username admin \
     --email admin@example.com \
     --noinput

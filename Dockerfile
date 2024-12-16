@@ -52,4 +52,4 @@ RUN --mount=type=bind,source=uv.lock,target=uv.lock \
 COPY . /app
 RUN uv sync --frozen --no-dev
 
-ENTRYPOINT ["/bin/sh", "serve_script.sh"]
+ENTRYPOINT ["/bin/bash", "serve_script.sh"]
