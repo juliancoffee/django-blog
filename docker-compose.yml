@@ -23,6 +23,26 @@ services:
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
     depends_on:
       - db
+    develop:
+      watch:
+        # runserver has hot-reload, so sync will do
+        #
+        # use sync+restart if you want to use gunicorn
+        - action: sync
+          path: .
+          target: /app
+          # exclude virtual environment, because it's platform-specific
+          ignore:
+            - .venv/
+
+        # rebuild the image if uv.lock changes
+        #
+        # we would probably want either rebuild or sync+restart if we need
+        # to re-collect static files
+        #
+        # or just develop with DEBUG enabled, idk
+        - action: rebuild
+          path: ./uv.lock
 
   adminer:
     image: adminer

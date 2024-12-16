@@ -52,4 +52,25 @@ RUN --mount=type=bind,source=uv.lock,target=uv.lock \
 COPY . /app
 RUN uv sync --frozen --no-dev
 
+# collect statics
+#
+# so, idk, where to put them, but if I put them here, I can use sync+restart
+# with greater ease
+#
+# this line isn't as fast as you may think, because Django will first install
+# all the apps, which for some reason takes about 7 seconds on my machine
+#
+# which makes builds slower, but that's a trade-off
+#
+# although if you change staticfiles, you'd probably want to rebuild them
+# and it would better to restart instead of rebuilding whole image? urgh
+#
+# why you're such pain in the ass, Django
+#
+# P. S. that's probably 10th time I'm moving it from serve_script.sh and back
+# and I'm sure it won't be the last time
+#
+# but I'll experiment for now
+RUN uv run manage.py collectstatic --no-input
+
 ENTRYPOINT ["/bin/bash", "serve_script.sh"]
