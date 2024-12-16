@@ -1,5 +1,8 @@
+import logging
+
 from django.http import (
     HttpResponse,
+    HttpRequest,
     HttpResponseRedirect,
 )
 from django.shortcuts import get_object_or_404, render
@@ -7,6 +10,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Post
+
+logger = logging.getLogger()
 
 
 # Create your views here.
@@ -36,21 +41,28 @@ def detail(request, post_id: int) -> HttpResponse:
     )
 
 
-def comment(request, post_id) -> HttpResponse:
-    def get_user_ip(request):
-        # NOTE: this may panic, but I don't care that much yet
-        # ideally, we would log some error here instead
-        match request.META.get("HTTP_X_FORWARDED_FOR").split(","):
+def comment(request: HttpRequest, post_id) -> HttpResponse:
+    def get_user_ip(request: HttpRequest):
+        """Get user ip from HTTP_X_FORWARDER_FOR header
+
+        If no such header found or unable to parse it, returns None.
+        """
+        # in theory, we could return REMOTE_ADDR on error, but it may as well
+        # be localhost or something similarly useless, if you use any proxies
+        #
+        # so if in doubt, just assume unknown
+        ip_chain = request.META.get("HTTP_X_FORWARDED_FOR")
+        if ip_chain is None:
+            logger.error(
+                f"No HTTP_X_FORWARDER_FOR header found: meta={request.META}"
+            )
+            return None
+
+        match ip_chain.split(","):
             case [main_ip, *_]:
                 return main_ip
             case rest:
-                # TODO: don't do debug prints, do debug logging :P
-                print(rest)
-                # in theory, you could return REMOTE_ADDR here, but
-                # it may as well be localhost or something similar, if
-                # you use any proxies
-                #
-                # which would be pretty useless, so just assume unknown
+                logger.error(f"Unexpected HTTP_X_FORWARDER_FOR split: {rest}")
                 return None
 
     p = get_object_or_404(Post, pk=post_id)
@@ -58,13 +70,13 @@ def comment(request, post_id) -> HttpResponse:
     try:
         comment = request.POST["comment"]
     except KeyError:
+        logger.error(f"Couldn't find comment in the form: POST={request.POST}")
         return render(
             request,
             "blog/detail.html",
             {
                 "post": p,
                 "comments": p.comment_set.all(),
-                # TODO(me): actually use this at some point
                 "error": "we couldn't get your comment, sommry!",
             },
         )

@@ -5,6 +5,9 @@
 <span>
     <em> Written: {{ post.pub_date }} </em>
 <span>
+{% if error %}
+    <h1> Error: {{ error }}</h1>
+{% endif %}
 {% if comments %}
     <ul>
         {% for comment in comments %}
