@@ -52,25 +52,22 @@ RUN --mount=type=bind,source=uv.lock,target=uv.lock \
 COPY . /app
 RUN uv sync --frozen --no-dev
 
+# drop `uv` at that point, and use plain python tools
+#
+# if you don't, and continue to use `uv run`, keep in mind that `uv run`
+# will try to load ALL the dependencies, including dev ones, as we didn't cache
+# them above, so you'll get quite a cache miss
+ENV PATH="/app/.venv/bin:$PATH"
+
 # collect statics
 #
-# so, idk, where to put them, but if I put them here, I can use sync+restart
-# with greater ease
+# so, idk where to put them
 #
-# this line isn't as fast as you may think, because Django will first install
-# all the apps, which for some reason takes about 7 seconds on my machine
+# if I put them there, `sync+restart` in `compose watch` is faster
+# if I put them in ./serve_script.sh, I don't need to use `rebuild` if I change
+# static files
 #
-# which makes builds slower, but that's a trade-off
-#
-# although if you change staticfiles, you'd probably want to rebuild them
-# and it would better to restart instead of rebuilding whole image? urgh
-#
-# why you're such pain in the ass, Django
-#
-# P. S. that's probably 10th time I'm moving it from serve_script.sh and back
-# and I'm sure it won't be the last time
-#
-# but I'll experiment for now
-RUN uv run manage.py collectstatic --no-input
+# fyi, it takes about 2 seconds on my machine at the time of writing
+RUN python manage.py collectstatic --no-input
 
 ENTRYPOINT ["/bin/bash", "serve_script.sh"]
