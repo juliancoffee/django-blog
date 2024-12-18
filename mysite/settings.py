@@ -87,13 +87,22 @@ DEBUG_LOGFILE = BASE_DIR / "debug.log"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "classic": {
+            "format": "{asctime} [{levelname}] [{module}] {message}",
+            "datefmt": "%H:%M:%S",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
             "level": "INFO",
+            "formatter": "classic",
             "class": "logging.StreamHandler",
         },
         "logfile": {
             "level": "DEBUG",
+            "formatter": "classic",
             "class": "logging.FileHandler",
             "filename": DEBUG_LOGFILE,
         },
