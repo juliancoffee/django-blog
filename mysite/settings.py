@@ -83,17 +83,36 @@ if DJDT:
         "debug_toolbar.middleware.DebugToolbarMiddleware",
     ]
 
+DEBUG_LOGFILE = BASE_DIR / "debug.log"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
         "console": {
+            "level": "INFO",
             "class": "logging.StreamHandler",
+        },
+        "logfile": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": DEBUG_LOGFILE,
         },
     },
     "root": {
-        "handlers": ["console"],
-        "level": "WARNING",
+        "handlers": ["console", "logfile"],
+        "level": os.environ.get("PYLOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "logfile"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "django.utils.autoreload": {
+            # god, please no, please, I don't want you to trace
+            # everything here
+            "level": "INFO",
+        },
     },
 }
 

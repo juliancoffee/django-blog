@@ -1,7 +1,9 @@
 import logging
+import os
 import pprint
 from collections.abc import Sequence
 
+from django.conf import settings
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -34,6 +36,28 @@ def index(request) -> HttpResponse:
 
 
 def detail(request, post_id: int) -> HttpResponse:
+    # TODO: this is premature optimization
+    #
+    # but
+    #
+    # we do two SQL queries here
+    #
+    # one to get the post with such id
+    # second to get all the comments for such id
+    #
+    # couldn't this be just one query with a join or smth?
+    #
+    # I mean, we would still need data for post itself
+    #
+    # its pub_data and post_text, but it's hard to imagine something
+    # be as slow in this world as an another SQL query
+    #
+    # I guess I could run it live with DJDT enabled and check the timings
+    #
+    # and then I could try to optimize it just for fun
+    #
+    # I couldn't find exactly JOIN, but I found something like prefetch_related
+    # and select_related
     p = get_object_or_404(Post, pk=post_id)
     return render(
         request,
@@ -41,6 +65,7 @@ def detail(request, post_id: int) -> HttpResponse:
         {
             "post": p,
             "comments": p.comment_set.all(),
+            "error": [],
         },
     )
 
@@ -111,3 +136,28 @@ def comment(request: HttpRequest, post_id) -> HttpResponse:
         #
         # ^ source: Django Docs, Tutorial part 4
         return HttpResponseRedirect(reverse("blog:detail", args=(post_id,)))
+
+
+def debug_view(request) -> HttpResponse:
+    # NOTE: idk where we should block requests here or in urlconfig?
+    #
+    # but it's not like this whole view follows any kind of best practices,
+    # so should I care about it that much?
+    #
+    # I should probably use something like sentry for such purpose, but
+    # well, it's a pet project
+    #
+    # and my pet is still a puppy
+    #
+    # meanwhile, it works okey-ish
+    if os.environ.get("DEBUG_LOG_VIEW") is None:
+        return HttpResponse(
+            "sommry, debug view is not enabled, go back", status=403
+        )
+
+    with open(settings.DEBUG_LOGFILE) as f:
+        return render(
+            request,
+            "blog/debug_view.html",
+            {"debug_file": settings.DEBUG_LOGFILE, "content": f.read()},
+        )
