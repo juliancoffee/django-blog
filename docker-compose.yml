@@ -46,13 +46,13 @@ services:
           target: /app/serve_script.sh
 
         # rebuild the image if uv.lock changes
-        #
-        # we would probably want either rebuild or sync+restart if we need
-        # to re-collect static files
-        #
-        # or just develop with DEBUG enabled, idk
         - action: rebuild
           path: ./uv.lock
+
+        # sync+restart if static files change
+        - action: sync+restart
+          path: ./blog/static
+          target: ./app/blog/static
 
   adminer:
     image: adminer

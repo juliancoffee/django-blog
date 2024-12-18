@@ -68,6 +68,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 # static files
 #
 # fyi, it takes about 2 seconds on my machine at the time of writing
-RUN python manage.py collectstatic --no-input
+#RUN python manage.py collectstatic --no-input
 
 ENTRYPOINT ["/bin/bash", "serve_script.sh"]
