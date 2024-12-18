@@ -83,6 +83,48 @@ if DJDT:
         "debug_toolbar.middleware.DebugToolbarMiddleware",
     ]
 
+DEBUG_LOGFILE = BASE_DIR / "debug.log"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "classic": {
+            "format": "{asctime} [{levelname}] [{module}] {message}",
+            "datefmt": "%H:%M:%S",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "formatter": "classic",
+            "class": "logging.StreamHandler",
+        },
+        "logfile": {
+            "level": "DEBUG",
+            "formatter": "classic",
+            "class": "logging.FileHandler",
+            "filename": DEBUG_LOGFILE,
+        },
+    },
+    "root": {
+        "handlers": ["console", "logfile"],
+        "level": os.environ.get("PYLOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "logfile"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "django.utils.autoreload": {
+            # god, please no, please, I don't want you to trace
+            # everything here
+            "level": "INFO",
+        },
+    },
+}
+
 ROOT_URLCONF = "mysite.urls"
 
 TEMPLATES = [

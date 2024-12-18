@@ -3,7 +3,7 @@
     --red: #662b2b;
 }
 
-li, p, pre, span {
+h1, li, p, pre, span {
     background: var(--pink);
 }
 
