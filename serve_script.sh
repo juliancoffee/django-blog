@@ -32,5 +32,5 @@ echo "" > debug.log
 # NOTE: use `exec` here to seize control, helps if you wanna Ctrl+C
 #
 # runserver has hot-reload, so that's what we use
-#exec python manage.py runserver 0.0.0.0:8000
-exec gunicorn mysite.wsgi --bind 0.0.0.0:8000 --access-logfile -
+exec python manage.py runserver 0.0.0.0:8000
+#exec gunicorn mysite.wsgi --bind 0.0.0.0:8000 --access-logfile -

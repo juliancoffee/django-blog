@@ -5,4 +5,4 @@
 docker compose up -d --build web-proxy
 
 # start all other containers
-docker compose up --watch
+docker compose up --watch --remove-orphans

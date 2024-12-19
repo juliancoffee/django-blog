@@ -11,11 +11,9 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
-  web-proxy:
+  web:
     build: .
-    ports:
-      - 8000:8000
-      # docker build hates me for this, but docker-compose doesn't seem to mind
+    # yes, yes, I should use secret files instead, but not now
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -53,6 +51,13 @@ services:
         - action: sync+restart
           path: ./blog/static
           target: ./app/blog/static
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 8000:80
+
 
   adminer:
     image: adminer
