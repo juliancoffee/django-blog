@@ -159,7 +159,7 @@ LOGGING = {
             # only log to the file, let some reverse-proxy handle console logs
             #
             # p. s. gunicorn already has own formatting, let it keep it
-            "handlers": ["logfile_minfmt"],
+            "handlers": ["console_minfmt", "logfile_minfmt"],
             "propagate": False,
             # NOTE:
             # gunicorn has two kinds of access logs
