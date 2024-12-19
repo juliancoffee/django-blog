@@ -129,10 +129,10 @@ LOGGING = {
     "handlers": {
         # console
         "console": console_handler(),
-        "console_min": console_handler(fmt="min"),
+        "console_minfmt": console_handler(fmt="min"),
         # log file
         "logfile": logfile_handler(),
-        "logfile_min": logfile_handler(fmt="min"),
+        "logfile_minfmt": logfile_handler(fmt="min"),
     },
     "root": {
         "handlers": ["console", "logfile"],
@@ -145,8 +145,30 @@ LOGGING = {
             "propagate": False,
         },
         "django.utils.autoreload": {
+            # I don't want to see this stuff in my logfile
+            "handlers": ["console"],
+            "propagate": False,
             # explicitly set to INFO to ignore its debug tracing
             "level": "INFO",
+        },
+        "django.server": {
+            # only log to the file, let some reverse-proxy handle console logs
+            "handlers": ["logfile"],
+        },
+        "gunicorn": {
+            # only log to the file, let some reverse-proxy handle console logs
+            #
+            # p. s. gunicorn already has own formatting, let it keep it
+            "handlers": ["logfile_minfmt"],
+            "propagate": False,
+            # NOTE:
+            # gunicorn has two kinds of access logs
+            # - debug logs with DEBUG level
+            # - proper access log if you enable --access_logfile, on INFO level
+            #
+            # If you enable gunicorn's DEBUG level and access logs, you'll get
+            # both
+            "level": os.environ.get("GUNICORN_LOG_LEVEL", "INFO"),
         },
     },
 }
