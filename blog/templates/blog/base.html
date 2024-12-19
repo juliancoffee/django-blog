@@ -12,7 +12,15 @@
     </header>
     {% block content %}{% endblock %}
     <footer>
-        <pre>Made with Django &copy juliancoffee 2024</pre>
+        <span>
+            Made with Django &copy juliancoffee 2024
+            <!--
+            TODO: conditionally show this url only if enabled
+
+            probably by using django context processors or something
+            -->
+            <a href="{% url 'blog:debug_view' %}"> 👀 </a>
+        </span>
     </footer>
 </body>
 </html>

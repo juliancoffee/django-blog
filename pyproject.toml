@@ -63,10 +63,18 @@ select = [
 ignore = [
     # I don't agree that Optional should be deprecated
     "UP007",
+    # use f-string instead of .format
+    # I know they both exist, now shut up
+    "UP032",
     # ok, ClassVar is great, but... no
+    # it's pedantic and messes up with Django too much
     "RUF012",
     # ruff should re-format long lines anyway, if possible
     "E501",
     # because this one is annoying
+    # if I want a lambda, I want a lambda
     "E731",
+    # move type imports under TYPE_CHECKING
+    # ok, this one is a bit insane, sorry
+    "TC003"
 ]

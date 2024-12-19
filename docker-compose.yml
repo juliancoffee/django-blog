@@ -11,11 +11,11 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
-  web-proxy:
+  web:
     build: .
     ports:
       - 8000:8000
-      # docker build hates me for this, but docker-compose doesn't seem to mind
+    # yes, yes, I should use secret files instead, but not now
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -23,6 +23,37 @@ services:
       - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
     depends_on:
       - db
+    deploy:
+      restart_policy:
+        condition: on-failure
+        # restart cooldown, if project was resurrected and then died again
+        # wait for 10 seconds before restarting it
+        delay: 10s
+    develop:
+      watch:
+        # runserver has hot-reload, so sync will do
+        #
+        # use sync+restart if you want to use gunicorn
+        - action: sync
+          path: .
+          target: /app
+          # exclude virtual environment, because it's platform-specific
+          ignore:
+            - .venv/
+
+        - action: sync+restart
+          path: ./serve_script.sh
+          target: /app/serve_script.sh
+
+        # rebuild the image if uv.lock changes
+        - action: rebuild
+          path: ./uv.lock
+
+        # sync+restart if static files change
+        - action: sync+restart
+          path: ./blog/static
+          target: ./app/blog/static
+
 
   adminer:
     image: adminer

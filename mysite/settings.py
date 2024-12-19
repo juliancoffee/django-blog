@@ -83,6 +83,90 @@ if DJDT:
         "debug_toolbar.middleware.DebugToolbarMiddleware",
     ]
 
+# logging configuration
+DEBUG_LOGFILE = BASE_DIR / "debug.log"
+
+
+def console_handler(
+    *,
+    fmt: str = "classic",
+    level: str = os.environ.get("CONSOLE_LOG_LEVEL", "DEBUG"),
+):
+    return {
+        "level": level,
+        "formatter": fmt,
+        "class": "logging.StreamHandler",
+    }
+
+
+def logfile_handler(
+    *,
+    fmt: str = "classic",
+    level: str = "DEBUG",
+):
+    return {
+        "level": level,
+        "formatter": fmt,
+        "class": "logging.FileHandler",
+        "filename": DEBUG_LOGFILE,
+    }
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "classic": {
+            "format": "{asctime} [{levelname}] [{module}] {message}",
+            "datefmt": "%H:%M:%S",
+            "style": "{",
+        },
+        "min": {
+            "format": "{message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        # console
+        "console": console_handler(),
+        "console_minfmt": console_handler(fmt="min"),
+        # log file
+        "logfile": logfile_handler(),
+        "logfile_minfmt": logfile_handler(fmt="min"),
+    },
+    "root": {
+        "handlers": ["console", "logfile"],
+        "level": os.environ.get("PYLOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "logfile"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "django.utils.autoreload": {
+            # I don't want to see this stuff in my logfile
+            "handlers": ["console"],
+            "propagate": False,
+            # explicitly set to INFO to ignore its debug tracing
+            "level": "INFO",
+        },
+        "gunicorn": {
+            # p. s. gunicorn already has own formatting, let it keep it
+            "handlers": ["console_minfmt", "logfile_minfmt"],
+            "propagate": False,
+            # NOTE:
+            # gunicorn has two kinds of access logs
+            # - debug logs with DEBUG level
+            # - proper access log if you enable --access_logfile, on INFO level
+            #
+            # If you enable gunicorn's DEBUG level and access logs, you'll get
+            # both
+            "level": os.environ.get("GUNICORN_LOG_LEVEL", "INFO"),
+        },
+    },
+}
+
 ROOT_URLCONF = "mysite.urls"
 
 TEMPLATES = [
