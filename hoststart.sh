@@ -5,4 +5,8 @@ export DEVMODE=1
 
 # clear debug logfile before staring
 echo "" > debug.log
-exec gunicorn -w 4 mysite.wsgi --bind 0.0.0.0:8000 --access-logfile -
+exec gunicorn mysite.wsgi \
+    -w 4 \
+    --bind 0.0.0.0:8000 \
+    --access-logfile - \
+    --log-level debug
