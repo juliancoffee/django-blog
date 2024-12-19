@@ -83,7 +83,35 @@ if DJDT:
         "debug_toolbar.middleware.DebugToolbarMiddleware",
     ]
 
+# logging configuration
 DEBUG_LOGFILE = BASE_DIR / "debug.log"
+
+
+def console_handler(
+    *,
+    fmt: str = "classic",
+    level: str = os.environ.get("CONSOLE_LOG_LEVEL", "DEBUG"),
+):
+    return {
+        "level": level,
+        "formatter": fmt,
+        "class": "logging.StreamHandler",
+    }
+
+
+def logfile_handler(
+    *,
+    fmt: str = "classic",
+    level: str = "DEBUG",
+):
+    return {
+        "level": level,
+        "formatter": fmt,
+        "class": "logging.FileHandler",
+        "filename": DEBUG_LOGFILE,
+    }
+
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -93,19 +121,18 @@ LOGGING = {
             "datefmt": "%H:%M:%S",
             "style": "{",
         },
+        "min": {
+            "format": "{message}",
+            "style": "{",
+        },
     },
     "handlers": {
-        "console": {
-            "level": "INFO",
-            "formatter": "classic",
-            "class": "logging.StreamHandler",
-        },
-        "logfile": {
-            "level": "DEBUG",
-            "formatter": "classic",
-            "class": "logging.FileHandler",
-            "filename": DEBUG_LOGFILE,
-        },
+        # console
+        "console": console_handler(),
+        "console_min": console_handler(fmt="min"),
+        # log file
+        "logfile": logfile_handler(),
+        "logfile_min": logfile_handler(fmt="min"),
     },
     "root": {
         "handlers": ["console", "logfile"],
@@ -118,8 +145,7 @@ LOGGING = {
             "propagate": False,
         },
         "django.utils.autoreload": {
-            # god, please no, please, I don't want you to trace
-            # everything here
+            # explicitly set to INFO to ignore its debug tracing
             "level": "INFO",
         },
     },
