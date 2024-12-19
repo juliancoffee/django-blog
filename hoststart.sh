@@ -8,5 +8,5 @@ echo "" > debug.log
 exec gunicorn mysite.wsgi \
     -w 4 \
     --bind 0.0.0.0:8000 \
-    --access-logfile - \
     --log-level debug
+    #--access-logfile - \
