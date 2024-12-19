@@ -151,13 +151,7 @@ LOGGING = {
             # explicitly set to INFO to ignore its debug tracing
             "level": "INFO",
         },
-        "django.server": {
-            # only log to the file, let some reverse-proxy handle console logs
-            "handlers": ["logfile"],
-        },
         "gunicorn": {
-            # only log to the file, let some reverse-proxy handle console logs
-            #
             # p. s. gunicorn already has own formatting, let it keep it
             "handlers": ["console_minfmt", "logfile_minfmt"],
             "propagate": False,

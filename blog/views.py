@@ -170,5 +170,7 @@ def debug_view(request) -> HttpResponse:
         return render(
             request,
             "blog/debug_view.html",
+            # TODO: what if we could reverse it somehow?
+            # that would suck with multiline logs though
             {"debug_file": settings.DEBUG_LOGFILE, "content": f.read()},
         )
