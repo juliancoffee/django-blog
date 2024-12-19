@@ -172,5 +172,10 @@ def debug_view(request) -> HttpResponse:
             "blog/debug_view.html",
             # TODO: what if we could reverse it somehow?
             # that would suck with multiline logs though
+            #
+            # ok I just found out about datadog, it might be simpler to
+            # integrate, at least they provide Docker image
+            #
+            # and hopefully some webview?
             {"debug_file": settings.DEBUG_LOGFILE, "content": f.read()},
         )
