@@ -12,6 +12,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.debug import SafeExceptionReporterFilter
 
 from .models import Post
 
@@ -82,9 +83,19 @@ def comment(request: HttpRequest, post_id) -> HttpResponse:
         # so if in doubt, just assume unknown
         ip_chain = request.META.get("HTTP_X_FORWARDED_FOR")
         if ip_chain is None:
+            # NOTE: request.META includes a lot of stuff in plaintext, including
+            # SECRET_KEY, so be careful with showing it
+            safe_filter = SafeExceptionReporterFilter()
+
+            def cleaner(entry):
+                key, val = entry
+                if safe_filter.hidden_settings.findall(key):
+                    val = safe_filter.cleansed_substitute
+                return key, val
+
             logger.error(
                 "No HTTP_X_FORWARDED_FOR header found: meta={meta}".format(
-                    meta=pf(request.META)
+                    meta=pf(sorted(map(cleaner, request.META.items())))
                 )
             )
             return None
@@ -150,7 +161,7 @@ def debug_view(request) -> HttpResponse:
     # and my pet is still a puppy
     #
     # meanwhile, it works okey-ish
-    if os.environ.get("DEBUG_LOG_VIEW") is None:
+    if os.environ.get("DEVMODE") is None:
         return HttpResponse(
             "sommry, debug view is not enabled, go back", status=403
         )

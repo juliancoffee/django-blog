@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # FIXME: remove before merging
-DEBUG_LOG_VIEW=1
+DEVMODE=1
 
 # clear debug logfile before staring
 echo "" > debug.log

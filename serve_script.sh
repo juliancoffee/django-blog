@@ -16,8 +16,11 @@ time python manage.py createsuperuser \
 
 echo "<> running the server"
 #export DJDT=1
+
 #export DEBUG=1
-export DEBUG_LOG_VIEW=1
+# I want to have DEVMODE separate from DEBUG in cases when I need to reproduce
+# something in release version, and they might be slightly separate
+export DEVMODE=1
 
 #export CONSOLE_LOG_LEVEL=INFO # default is DEBUG
 export PYLOG_LEVEL=DEBUG # default is INFO
