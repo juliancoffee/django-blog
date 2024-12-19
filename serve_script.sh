@@ -39,4 +39,5 @@ echo "" > debug.log
 exec gunicorn mysite.wsgi \
     --bind 0.0.0.0:8000 \
     --reload \
+    --reload-extra-file blog \
     --access-logfile -
