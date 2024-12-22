@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-import logging
 import os
 import sys
 from pathlib import Path
@@ -116,28 +115,6 @@ def logfile_handler(
     }
 
 
-class ServerPeekHandler(logging.StreamHandler):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def flush(self):
-        sys.stdout.flush()
-
-    def emit(self, record: logging.LogRecord):
-        try:
-            request = record.request  # type: ignore
-        except AttributeError:
-            super().emit(record)
-            return
-
-        msg = self.format(record)
-
-        method = request.method
-        host = request.META["HTTP_HOST"]
-        print(f"{msg} <{method} to {host}>", file=sys.stderr)
-        self.flush()
-
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -159,12 +136,6 @@ LOGGING = {
         # log file
         "logfile": logfile_handler(),
         "logfile_minfmt": logfile_handler(fmt="min"),
-        # request special
-        "server_peek": {
-            "()": ServerPeekHandler,
-            "level": "DEBUG",
-            "formatter": "classic",
-        },
     },
     "root": {
         "handlers": ["console", "logfile"],
@@ -182,11 +153,6 @@ LOGGING = {
             "propagate": False,
             # explicitly set to INFO to ignore its debug tracing
             "level": "INFO",
-        },
-        "django.request": {
-            # just to play with custom handlers, really
-            "handlers": ["server_peek"],
-            "propagate": False,
         },
         "gunicorn": {
             # p. s. gunicorn already has own formatting, let it keep it
