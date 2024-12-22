@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -23,6 +24,9 @@ load_dotenv(BASE_DIR / ".env")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = "DEBUG" in os.environ
+# I want to have DEVMODE separate from DEBUG in cases when I need to reproduce
+# something in release version, and they might be slightly separate
+DEV_MODE = "DEVMODE" in os.environ
 DJDT = "DJDT" in os.environ
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -112,12 +116,34 @@ def logfile_handler(
     }
 
 
+class ServerPeekHandler(logging.StreamHandler):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def flush(self):
+        sys.stdout.flush()
+
+    def emit(self, record: logging.LogRecord):
+        try:
+            request = record.request  # type: ignore
+        except AttributeError:
+            super().emit(record)
+            return
+
+        msg = self.format(record)
+
+        method = request.method
+        host = request.META["HTTP_HOST"]
+        print(f"{msg} <{method} to {host}>", file=sys.stderr)
+        self.flush()
+
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
         "classic": {
-            "format": "{asctime} [{levelname}] [{module}] {message}",
+            "format": "{asctime} [{levelname}] [{name}] {message}",
             "datefmt": "%H:%M:%S",
             "style": "{",
         },
@@ -133,6 +159,12 @@ LOGGING = {
         # log file
         "logfile": logfile_handler(),
         "logfile_minfmt": logfile_handler(fmt="min"),
+        # request special
+        "server_peek": {
+            "()": ServerPeekHandler,
+            "level": "DEBUG",
+            "formatter": "classic",
+        },
     },
     "root": {
         "handlers": ["console", "logfile"],
@@ -150,6 +182,11 @@ LOGGING = {
             "propagate": False,
             # explicitly set to INFO to ignore its debug tracing
             "level": "INFO",
+        },
+        "django.request": {
+            # just to play with custom handlers, really
+            "handlers": ["server_peek"],
+            "propagate": False,
         },
         "gunicorn": {
             # p. s. gunicorn already has own formatting, let it keep it
