@@ -23,6 +23,9 @@ load_dotenv(BASE_DIR / ".env")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = "DEBUG" in os.environ
+# I want to have DEVMODE separate from DEBUG in cases when I need to reproduce
+# something in release version, and they might be slightly separate
+DEV_MODE = "DEVMODE" in os.environ
 DJDT = "DJDT" in os.environ
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -117,7 +120,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "classic": {
-            "format": "{asctime} [{levelname}] [{module}] {message}",
+            "format": "{asctime} [{levelname}] [{name}] {message}",
             "datefmt": "%H:%M:%S",
             "style": "{",
         },
@@ -176,6 +179,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "mysite.context_processors.dev_mode",
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
