@@ -19,6 +19,14 @@ body {
     background: white url("images/paw-mushroom-40.png");
 }
 
+#comment-form {
+    display: flex;
+}
+
+#comment-form * {
+    margin: 0.1rem;
+}
+
 header {
     background: var(--pink);
     display: flex;
