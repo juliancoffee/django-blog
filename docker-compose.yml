@@ -33,7 +33,8 @@ services:
       watch:
         # runserver has hot-reload, so sync will do
         #
-        # use sync+restart if you want to use gunicorn
+        # gunicorn has it too, if you configure it, but it doesn't seem to
+        # support hot-reloading for static files
         - action: sync
           path: .
           target: /app
