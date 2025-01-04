@@ -51,9 +51,10 @@ services:
           path: ./uv.lock
 
         # sync+restart if static files change
-        - action: sync+restart
-          path: ./blog/static
-          target: ./app/blog/static
+        # god it is annoying though
+        #- action: sync+restart
+          #path: ./blog/static
+          #target: ./app/blog/static
 
 
   adminer:
