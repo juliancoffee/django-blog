@@ -26,8 +26,7 @@ from django.shortcuts import redirect
 from django.urls import include, path
 
 urlpatterns = [
-    path("", lambda request: redirect("blog/", permanent=False)),
-    path("blog/", include("blog.urls")),
+    path("", include("blog.urls")),
     path("admin/", admin.site.urls),
     *debug_toolbar_urls(),
 ]
