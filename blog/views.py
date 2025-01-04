@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.debug import SafeExceptionReporterFilter
+from django.contrib.auth.decorators import login_not_required
 
 from .models import Post
 
@@ -22,6 +23,7 @@ pf = pprint.pformat
 
 
 # Create your views here.
+@login_not_required
 def index(request) -> HttpResponse:
     # only show posts that already have been published
     # i. e. ones with pub_date less than or equal to 'now'

@@ -8,7 +8,17 @@
 </head>
 <body>
     <header>
-        <a href="{% url 'blog:index' %}"> * Blog</a>
+        <!-- using two divs there to split the flebox into two ends --!>
+        <div class="right-header">
+            <a href="{% url 'blog:index' %}"> * Blog</a>
+        </div>
+        <div class="left-header">
+            {% if user.is_authenticated %}
+                <span>Account: {{ user }}</span>
+            {% else %}
+                <span>You don't have an account? 👀</span>
+            {% endif %}
+        </div>
     </header>
     {% block content %}{% endblock %}
     <footer>

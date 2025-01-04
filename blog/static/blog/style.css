@@ -21,9 +21,19 @@ body {
 
 header {
     background: var(--pink);
+    display: flex;
+    /*
+     * This one seems to be the default
+     * Put it to column to make it vertical, if you'd like.
+     */
+    flex-direction: row;
+    /* Space them at different ends
+     */
+    justify-content: space-between;
 }
 
 footer {
+    /* or how to center a div */
     max-width: fit-content;
     margin: auto;
 }
