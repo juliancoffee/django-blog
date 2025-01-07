@@ -38,7 +38,8 @@ def index(request) -> HttpResponse:
     return render(request, "blog/index.html", context)
 
 
-@login_not_required
+# TODO: remove this, it's temporary
+# @login_not_required
 def detail(request, post_id: int) -> HttpResponse:
     # TODO: this is premature optimization
     #
