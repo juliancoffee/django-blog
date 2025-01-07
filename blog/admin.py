@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Comment, Post
+from blog.post.models import Comment, Post
 
 
 class CommentInline(admin.TabularInline):
