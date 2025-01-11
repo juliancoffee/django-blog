@@ -9,10 +9,10 @@
 <body>
     <header>
         <!-- using two divs there to split the flebox into two ends --!>
-        <div class="right-header">
+        <div>
             <a href="{% url 'blog:index' %}"> * Blog</a>
         </div>
-        <div class="left-header">
+        <div>
             {% if user.is_authenticated %}
                 <span>Account: {{ user }}</span>
             {% else %}

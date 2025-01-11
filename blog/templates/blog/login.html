@@ -4,5 +4,19 @@
 {% if next %}
     <p>The page you're trying to access requires login.</p>
 {% endif %}
-<p> Unfortunately for you, login page is not implemented yet. </p>
+
+<div id="login-form">
+    <h1> Login here, if you are friend!</h1>
+    <form id="login-form" action="{% url 'blog:login' %}" method="post">
+        {% csrf_token %}
+
+        {{form}}
+
+        <input type="submit" value="Me fren!">
+        <!-- that's so that Django knows how to redirect -->
+        <input type="hidden" name="next" value="{{ next }}">
+    </form>
+</div>
+
+<p> Registration page is not implemented yet. </p>
 {% endblock %}
