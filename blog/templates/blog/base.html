@@ -15,6 +15,7 @@
         <div>
             {% if user.is_authenticated %}
                 <span>Account: {{ user }}</span>
+                <a href="{% url 'blog:logout' %}">Log out</a>
             {% else %}
                 <span>You don't have an account? 👀</span>
             {% endif %}
