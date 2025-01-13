@@ -8,6 +8,7 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.urls import reverse, reverse_lazy
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,40 @@ class LoginView(DjangoLoginView):
     next_page = reverse_lazy("blog:index")
 
 
+# NOTE: that must be POST method, not GET
+#
+# While it's easy to make it a GET request and fire via the link, GET shouldn't
+# be used for that.
+#
+# GET is considered a "safe" method and omits a lot of security checks, but
+# logout is a bit of a destructive operation, so yeah...
+#
+# And because we can't use GET and I don't want to have a separate logout page,
+# because that'd be super annoying I have two options
+# 1) wrap it in the invisible form
+# 2) make a button and place a JS fetch on it
+#
+# And I went with the third option, HTMX, because why not?
+#
+# So, HTMX has its own set of quirks.
+# 1) One of the points of HTMX are partial updates via template fragments.
+# I.e. instead of sending whole HTML document, we only send required part.
+#
+# Which is cool, but would require to potentially refactor my whole template
+# folder, and I don't want to do that, so I just won't do that.
+#
+# 2) If we're not going to send partial updates, we would keep plain redirects
+# but for some reason HTMX doesn't recognise them.
+#
+# It does have the ability to do that via the custom header, so that's what
+# we're using.
+#
+# P. S. I might re-design my templates later into using fragments.
+# Django should allow that with their {% include "other.html" %} directive.
+@require_POST
 def instant_logout(request: HttpRequest) -> HttpResponse:
     logout(request)
-    return HttpResponseRedirect(reverse("blog:index"))
+
+    response = HttpResponse()
+    response.headers["HX-Redirect"] = reverse("blog:index")
+    return response

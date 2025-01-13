@@ -5,6 +5,11 @@
 <head>
     <title>{% block title %}My Django blog{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'blog/style.css' %}">
+    <script
+        src="https://unpkg.com/htmx.org@2.0.4"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous">
+    </script>
 </head>
 <body>
     <header>
@@ -15,7 +20,10 @@
         <div>
             {% if user.is_authenticated %}
                 <span>Account: {{ user }}</span>
-                <a href="{% url 'blog:logout' %}">Log out</a>
+                <button
+                    hx-post="{% url 'blog:logout' %}"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                >Log out</button>
             {% else %}
                 <span>You don't have an account? 👀</span>
             {% endif %}
