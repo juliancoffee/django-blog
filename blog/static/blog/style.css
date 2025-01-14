@@ -40,7 +40,7 @@ body {
     align-items: center;
 }
 
-#login-form input[type="submit"] {
+#login-form input[type="submit"], button {
     background: white;
 }
 

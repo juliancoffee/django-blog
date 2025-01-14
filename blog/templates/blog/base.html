@@ -25,7 +25,7 @@
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                 >Log out</button>
             {% else %}
-                <span>You don't have an account? 👀</span>
+                <a href="{% url 'blog:login' %}">You don't have an account? 👀</a>
             {% endif %}
         </div>
     </header>
