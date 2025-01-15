@@ -16,7 +16,9 @@ urlpatterns = [
     # TODO: that could be a separate Django app?
     path("accounts/login/", blog.auth.views.LoginView.as_view(), name="login"),
     path("accounts/logout/", blog.auth.views.instant_logout, name="logout"),
-    path("accounts/signup/", blog.auth.views.SignUpView.as_view(), name="signup"),
+    path(
+        "accounts/signup/", blog.auth.views.SignUpView.as_view(), name="signup"
+    ),
     # misc
     path("debug_view/", blog.debug.views.debug_view, name="debug_view"),
 ]

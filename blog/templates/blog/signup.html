@@ -1,5 +1,31 @@
 {% extends "./base.html" %}
 
 {% block content %}
-    <span> hi here, the page is under construction </span>
+    <h1> Hi here! </h1>
+
+    {% if form.errors %}
+        {{ form.errors }}
+    {% endif %}
+    <form
+        id="signup-form"
+        action="{% url 'blog:signup' %}"
+        method="POST"
+    >
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>{{ form.username.label_tag }}</td>
+                <td>{{ form.username }}</td>
+            </tr>
+            <tr>
+                <td>{{ form.password1.label_tag }}</td>
+                <td>{{ form.password1 }} </td>
+            </tr>
+            <tr>
+                <td>{{ form.password2.label_tag }}</td>
+                <td>{{ form.password2 }}</td>
+            </tr>
+        </table>
+        <input type="submit" value="Yep, that's me">
+    </form>
 {% endblock %}

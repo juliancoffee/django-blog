@@ -1,11 +1,14 @@
 import logging
 
-from django.contrib.auth import logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_not_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.http import (
     HttpRequest,
     HttpResponse,
+    HttpResponseRedirect,
 )
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
@@ -62,6 +65,7 @@ def instant_logout(request: HttpRequest) -> HttpResponse:
     response.headers["HX-Redirect"] = reverse("blog:index")
     return response
 
+
 # NOTE:
 # We use method decorator on "dispatch" because that's an entry point.
 #
@@ -73,12 +77,46 @@ def instant_logout(request: HttpRequest) -> HttpResponse:
 # Although if I remember it correctly from looking at Django's source code and
 # `as_view()` method in general, it copies attributes from dispatch method to
 # the returned view function.
-#
 # So I guess that is the reason why we put the decorator on dispatch.
 #
 # But I don't think I'll *understand* the behaviour until I'll write my own
 # middleware.
 @method_decorator(login_not_required, name="dispatch")
 class SignUpView(View):
+    template_name = "blog/signup.html"
+
     def get(self, request, *args, **kwargs) -> HttpResponse:
-        return render(request, "blog/signup.html")
+        form: UserCreationForm = UserCreationForm()
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+            },
+        )
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        form: UserCreationForm = UserCreationForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password1"]
+
+            user = User.objects.create_user(username, None, password)
+            user.save()
+
+            logged_user = authenticate(username=username, password=password)
+            # this should always pass
+            # after all, we have just created this user
+            assert logged_user is not None
+
+            login(request, logged_user)
+
+            return HttpResponseRedirect(reverse("blog:index"))
+        else:
+            return render(
+                request,
+                self.template_name,
+                {
+                    "form": form,
+                },
+            )
