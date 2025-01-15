@@ -1,14 +1,17 @@
 import logging
 
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_not_required
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.http import (
     HttpRequest,
     HttpResponse,
-    HttpResponseRedirect,
 )
+from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
+from django.views.generic.base import View
 
 logger = logging.getLogger(__name__)
 
@@ -58,3 +61,24 @@ def instant_logout(request: HttpRequest) -> HttpResponse:
     response = HttpResponse()
     response.headers["HX-Redirect"] = reverse("blog:index")
     return response
+
+# NOTE:
+# We use method decorator on "dispatch" because that's an entry point.
+#
+# sort of
+#
+# I just realized that I'm not sure how exactly LoginRequired middleware checks
+# which requests to allow and which to discard.
+#
+# Although if I remember it correctly from looking at Django's source code and
+# `as_view()` method in general, it copies attributes from dispatch method to
+# the returned view function.
+#
+# So I guess that is the reason why we put the decorator on dispatch.
+#
+# But I don't think I'll *understand* the behaviour until I'll write my own
+# middleware.
+@method_decorator(login_not_required, name="dispatch")
+class SignUpView(View):
+    def get(self, request, *args, **kwargs) -> HttpResponse:
+        return render(request, "blog/signup.html")
