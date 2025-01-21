@@ -1,17 +1,23 @@
 from itertools import chain
+from typing import TYPE_CHECKING
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.forms import Form
 from django.test import TestCase
 from django.urls import reverse
 
+if TYPE_CHECKING:
+    from django.forms import Form
 
-class AuthTest(TestCase):
-    # I know that assertFormError exists, but it requires fieldname, and that's
-    # a weird limitation, so here's my version instead.
-    def assertFormContainsErrorCode(self, form: Form, error_code: str):
+
+class FormTestCase(TestCase):
+    # I know that assertFormError exists, but it requires a fieldname, and that's
+    # a weird limitation imo, so here's my version instead.
+    def assertFormContainsErrorCode(
+        self, response, error_code: str
+    ):
         """Check that form errors contain the error with error_code"""
+        form: Form = response.context["form"]
         errors = form.errors.get_json_data()
 
         # flatmap and find the code for each message for each field
@@ -23,6 +29,68 @@ class AuthTest(TestCase):
 
         self.assertIn(error_code, error_codes)
 
+
+class AuthLoginTest(FormTestCase):
+    def check_current_user(self) -> User:
+        """ Get currently authenticated user """
+        # There should be some better way, but it seem to work just fine
+
+        index_url = reverse("blog:index")
+        r = self.client.get(index_url)
+        return r.context["user"]
+
+    def test_login_ok_simple(self):
+        # create a user to work with
+        NAME = "test_user"
+        PASS = "password_super_cool"
+        User.objects.create_user(username=NAME, password=PASS)
+
+        # sanity check, we can't have a user yet
+        self.assertFalse(self.check_current_user().is_authenticated)
+
+        # now attempt the login
+        login_url = reverse("blog:login")
+        r = self.client.post(
+            login_url,
+            {
+                "username": NAME,
+                "password": PASS,
+            },
+        )
+
+        # assert the redirect to the main page
+        # TODO: create a test that checks redirects from `?next=` attribute?
+        self.assertRedirects(r, reverse("blog:index"))
+
+        # now we should be authenticated
+        self.assertTrue(self.check_current_user().is_authenticated)
+
+    def test_login_bad(self):
+        # create a user to work with
+        NAME = "test_user"
+        PASS = "password_super_cool"
+        User.objects.create_user(username=NAME, password=PASS)
+
+        # sanity check, we can't have a user yet
+        self.assertFalse(self.check_current_user().is_authenticated)
+
+        # now attempt the login
+        login_url = reverse("blog:login")
+        r = self.client.post(
+            login_url,
+            {
+                "username": NAME,
+                "password": PASS + PASS,
+            },
+        )
+
+        self.assertFormContainsErrorCode(r, "invalid_login")
+
+        # and we shouldn't be authenticated
+        self.assertFalse(self.check_current_user().is_authenticated)
+
+
+class AuthRegistrationTest(FormTestCase):
     def test_registration_ok(self):
         register_url = reverse("blog:signup")
 
@@ -60,8 +128,7 @@ class AuthTest(TestCase):
         self.assertEqual(r.status_code, 400)
 
         # assert form's error code
-        form = r.context["form"]
-        self.assertFormContainsErrorCode(form, "password_too_common")
+        self.assertFormContainsErrorCode(r, "password_too_common")
 
         # assert that no users were created
         users = User.objects.all()
@@ -83,8 +150,7 @@ class AuthTest(TestCase):
         self.assertEqual(r.status_code, 400)
 
         # assert form's error code
-        form = r.context["form"]
-        self.assertFormContainsErrorCode(form, "password_too_short")
+        self.assertFormContainsErrorCode(r, "password_too_short")
 
         # assert that no users were created
         users = User.objects.all()
@@ -109,8 +175,7 @@ class AuthTest(TestCase):
         self.assertEqual(r.status_code, 400)
 
         # assert form's error code
-        form = r.context["form"]
-        self.assertFormContainsErrorCode(form, "unique")
+        self.assertFormContainsErrorCode(r, "unique")
 
         # assert that no additional users were created
         users = User.objects.all()
@@ -132,8 +197,7 @@ class AuthTest(TestCase):
         self.assertEqual(r.status_code, 400)
 
         # assert form's error code
-        form = r.context["form"]
-        self.assertFormContainsErrorCode(form, "password_mismatch")
+        self.assertFormContainsErrorCode(r, "password_mismatch")
 
         # assert that no users were created
         users = User.objects.all()

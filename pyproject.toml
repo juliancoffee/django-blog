@@ -76,5 +76,7 @@ ignore = [
     "E731",
     # move type imports under TYPE_CHECKING
     # ok, this one is a bit insane, sorry
-    "TC003"
+    "TC002",
+    # same as the previous one but for stdlib
+    "TC003",
 ]
