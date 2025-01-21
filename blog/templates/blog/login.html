@@ -1,0 +1,24 @@
+{% extends "./base.html" %}
+
+{% block content %}
+{% if next %}
+    <p>The page you're trying to access requires login.</p>
+{% endif %}
+
+<div id="login-form">
+    <h1> Login here, if you are friend!</h1>
+    <form id="login-form" action="{% url 'blog:login' %}" method="post">
+        {% csrf_token %}
+
+        {{form}}
+
+        <input type="submit" value="Me fren!">
+        <!-- that's so that Django knows how to redirect -->
+        <input type="hidden" name="next" value="{{ next }}">
+    </form>
+</div>
+
+<a href="{% url 'blog:signup' %}">
+    <p>We don't know each other yet? Let's fix this!</p>
+</a>
+{% endblock %}

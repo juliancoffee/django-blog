@@ -5,10 +5,29 @@
 <head>
     <title>{% block title %}My Django blog{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'blog/style.css' %}">
+    <script
+        src="https://unpkg.com/htmx.org@2.0.4"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous">
+    </script>
 </head>
 <body>
     <header>
-        <a href="{% url 'blog:index' %}"> * Blog</a>
+        <!-- using two divs there to split the flebox into two ends --!>
+        <div>
+            <a href="{% url 'blog:index' %}"> * Blog</a>
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+                <span>Account: {{ user }}</span>
+                <button
+                    hx-post="{% url 'blog:logout' %}"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                >Log out</button>
+            {% else %}
+                <a href="{% url 'blog:login' %}">You don't have an account? 👀</a>
+            {% endif %}
+        </div>
     </header>
     {% block content %}{% endblock %}
     <footer>

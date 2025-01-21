@@ -3,9 +3,10 @@
     --red: #662b2b;
 }
 
-h1, li, p, pre, span {
+h1, li, p, pre, span, form label {
     background: var(--pink);
 }
+
 
 li::marker {
     content: '🐾 ';
@@ -19,11 +20,45 @@ body {
     background: white url("images/paw-mushroom-40.png");
 }
 
+#comment-form {
+    display: flex;
+}
+
+#comment-form * {
+    margin: 0.1rem;
+}
+
+#login-form {
+    /* center the content inside
+     *
+     * the fun thing is we don't even need to center a div itself.
+     * it seems to do that automatically!
+     */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#login-form input[type="submit"], button {
+    background: white;
+}
+
 header {
     background: var(--pink);
+    display: flex;
+    /*
+     * This one seems to be the default
+     * Put it to column to make it vertical, if you'd like.
+     */
+    flex-direction: row;
+    /* Space them at different ends
+     */
+    justify-content: space-between;
 }
 
 footer {
+    /* or how to center a div */
     max-width: fit-content;
     margin: auto;
 }

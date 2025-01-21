@@ -5,6 +5,7 @@
 <span>
     <em> Written: {{ post.pub_date }} </em>
 <span>
+
 {% if error %}
     <h1> Error: {{ error }}</h1>
 {% endif %}
@@ -17,9 +18,14 @@
 {% else %}
     <p>No comments yet 🐾</p>
 {% endif %}
-<form action="{% url 'blog:comment' post.id %}" method="POST">
-{% csrf_token %}
-    <input type="text" id="comment" name="comment">
+
+<form
+    id="comment-form"
+    action="{% url 'blog:comment' post.id %}"
+    method="POST"
+>
+    {% csrf_token %}
+    {{ form }}
     <input type="submit" value="Meow!">
 </form>
 {% endblock %}

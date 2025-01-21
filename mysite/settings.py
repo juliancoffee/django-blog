@@ -72,6 +72,9 @@ MIDDLEWARE = [
     # "verbose_csrf_middleware.CsrfViewMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # make ALL requests require authentication by default
+    # yeah, I got this idea from OWASP
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
