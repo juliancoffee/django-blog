@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 class FormTestCase(TestCase):
     # I know that assertFormError exists, but it requires a fieldname, and that's
     # a weird limitation imo, so here's my version instead.
-    def assertFormContainsErrorCode(
-        self, response, error_code: str
-    ):
+    def assertFormContainsErrorCode(self, response, error_code: str):
         """Check that form errors contain the error with error_code"""
         form: Form = response.context["form"]
         errors = form.errors.get_json_data()
@@ -29,16 +27,16 @@ class FormTestCase(TestCase):
 
         self.assertIn(error_code, error_codes)
 
-
-class AuthLoginTest(FormTestCase):
     def check_current_user(self) -> User:
-        """ Get currently authenticated user """
+        """Get currently authenticated user"""
         # There should be some better way, but it seem to work just fine
 
         index_url = reverse("blog:index")
         r = self.client.get(index_url)
         return r.context["user"]
 
+
+class AuthLoginTest(FormTestCase):
     def test_login_ok_simple(self):
         # create a user to work with
         NAME = "test_user"
@@ -110,7 +108,10 @@ class AuthRegistrationTest(FormTestCase):
         user_count = User.objects.filter(username=NAME).count()
         self.assertEqual(user_count, 1)
 
-        # check that we can authenticate with the same password now
+        # assert that we're logged in now
+        self.assertTrue(self.check_current_user().is_authenticated)
+
+        # check that we can authenticate with the same password
         authenticated_user = authenticate(username=NAME, password=PASS)
         self.assertIsNotNone(authenticated_user)
 
