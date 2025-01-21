@@ -94,7 +94,7 @@ class SignUpView(View, TemplateResponseMixin):
         # if invalid, return the form back to the user
         # it will have `.errors` field in it, that can be used by the template
         if not form.is_valid():
-            return self.render_to_response({"form": form})
+            return self.render_to_response({"form": form}, status=400)
 
         # else, register the user
         username = form.cleaned_data["username"]
