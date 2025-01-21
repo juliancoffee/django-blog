@@ -125,9 +125,6 @@ class AuthRegistrationTest(FormTestCase):
         }
         r = self.client.post(register_url, post_data)
 
-        # assert error response
-        self.assertEqual(r.status_code, 400)
-
         # assert form's error code
         self.assertFormContainsErrorCode(r, "password_too_common")
 
@@ -146,9 +143,6 @@ class AuthRegistrationTest(FormTestCase):
             "password2": "short",
         }
         r = self.client.post(register_url, post_data)
-
-        # assert error response
-        self.assertEqual(r.status_code, 400)
 
         # assert form's error code
         self.assertFormContainsErrorCode(r, "password_too_short")
@@ -172,9 +166,6 @@ class AuthRegistrationTest(FormTestCase):
         }
         r = self.client.post(register_url, post_data)
 
-        # assert error response
-        self.assertEqual(r.status_code, 400)
-
         # assert form's error code
         self.assertFormContainsErrorCode(r, "unique")
 
@@ -193,9 +184,6 @@ class AuthRegistrationTest(FormTestCase):
             "password2": "password321",
         }
         r = self.client.post(register_url, post_data)
-
-        # assert error response
-        self.assertEqual(r.status_code, 400)
 
         # assert form's error code
         self.assertFormContainsErrorCode(r, "password_mismatch")

@@ -8,12 +8,11 @@ from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.http import (
     HttpRequest,
     HttpResponse,
-    HttpResponseRedirect,
 )
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
-from django.views.generic.base import TemplateResponseMixin, View
+from django.views.generic.edit import FormView
 
 logger = logging.getLogger(__name__)
 
@@ -81,21 +80,12 @@ def instant_logout(request: HttpRequest) -> HttpResponse:
 # But I don't think I'll *understand* the behaviour until I'll write my own
 # middleware.
 @method_decorator(login_not_required, name="dispatch")
-class SignUpView(View, TemplateResponseMixin):
+class SignUpView(FormView):
     template_name = "blog/signup.html"
+    form_class = UserCreationForm
+    success_url = reverse_lazy("blog:index")
 
-    def get(self, request, *args, **kwargs) -> HttpResponse:
-        form: UserCreationForm = UserCreationForm()
-        return self.render_to_response({"form": form})
-
-    def post(self, request, *args, **kwargs) -> HttpResponse:
-        form: UserCreationForm = UserCreationForm(request.POST)
-
-        # if invalid, return the form back to the user
-        # it will have `.errors` field in it, that can be used by the template
-        if not form.is_valid():
-            return self.render_to_response({"form": form}, status=400)
-
+    def form_valid(self, form):
         # else, register the user
         username = form.cleaned_data["username"]
         password = form.cleaned_data["password1"]
@@ -103,12 +93,11 @@ class SignUpView(View, TemplateResponseMixin):
         user = User.objects.create_user(username, None, password)
         user.save()
 
-        # for convenience sake, login the user right there
+        # this should always pass, after all, we have just created this user
         logged_user = authenticate(username=username, password=password)
-        # this should always pass
-        # after all, we have just created this user
         assert logged_user is not None
 
-        login(request, logged_user)
+        # for convenience sake, log in the user right there
+        login(self.request, logged_user)
 
-        return HttpResponseRedirect(reverse("blog:index"))
+        return super().form_valid(form)
