@@ -28,6 +28,11 @@ def migrate_to_proper_ip(apps, _schema_editor):
         # ORM should properly convert all the types, yes? yes?
         #
         # I hope I won't forget to update this comment when I'll test it
+        #
+        # UPD: it seems to erase it anyway, why ...
+        # UPD: of course, I forgot .save(), gosh
+        #
+        # TODO: fix this migration
         if comment.commenter_ip == "<anon>":
             comment.commenter_ip_new = None
         else:

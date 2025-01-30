@@ -17,7 +17,12 @@
 </ul>
 <ul>
     <li>Super User: {{ user.is_superuser }}</li>
-    <li>Staff: {{ user.is_staff }}</li>
+    {% if user.is_staff %}
+    {% comment %} for some reason I can't use reverse url here {% endcomment %}
+    <li>Staff: <a href="/admin">Yes, go</a></li>
+    {% else %}
+    <li>Staff: Nope</li>
+    {% endif %}
     <li>Still with us: {{ user.is_active }}</li>
 </ul>
 {% endblock %}
