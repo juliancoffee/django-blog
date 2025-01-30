@@ -3,14 +3,14 @@ import pprint
 
 from django.contrib.auth.decorators import login_not_required
 from django.http import (
-    HttpRequest,
     HttpResponse,
     HttpResponseRedirect,
 )
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.utils.decorators import method_decorator
+from django.views.generic.edit import FormView
 
 from blog.utils import get_user_ip
 
@@ -38,8 +38,7 @@ def index(request) -> HttpResponse:
     return render(request, "blog/index.html", context)
 
 
-# TODO: remove this, it's temporary
-# @login_not_required
+@login_not_required
 def detail(request, post_id: int) -> HttpResponse:
     # TODO: this is premature optimization
     #
@@ -70,52 +69,44 @@ def detail(request, post_id: int) -> HttpResponse:
         {
             "post": p,
             "comments": p.comment_set.all(),
-            "error": [],
             "form": CommentForm(),
         },
     )
 
 
-# TODO: handle anonymours and logged-on users properly
-@login_not_required
-# p. s. require_POST sure has a fun behaviour where it spits out empty page
-# on wrong HTTP method
-@require_POST
-def comment(request: HttpRequest, post_id) -> HttpResponse:
-    p = get_object_or_404(Post, pk=post_id)
+@method_decorator(login_not_required, name="dispatch")
+class CommentView(FormView):
+    template_name = "blog/detail.html"
+    form_class = CommentForm
+    http_method_names = ["post"]
 
-    form = CommentForm(request.POST)
-    if form.is_valid():
+    def form_invalid(self, form):
+        form_data = self.request.POST.dict()
+        logger.error(f"Couldn't find comment in the form: POST={pf(form_data)}")
+
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        post_id: int = self.kwargs["post_id"]
+        p = get_object_or_404(Post, pk=post_id)
+
         comment = form.cleaned_data["comment"]
-        match get_user_ip(request):
-            case None:
-                p.comment_set.create(
-                    comment_text=comment, pub_date=timezone.now()
-                )
-            case ip:
-                p.comment_set.create(
-                    comment_text=comment,
-                    pub_date=timezone.now(),
-                    commenter_ip=ip,
-                )
+        comment_data = {}
+        if (ip := get_user_ip(self.request)) is not None:
+            comment_data["commenter_ip"] = ip
+        user = self.request.user if self.request.user.is_authenticated else None
+
+        logger.debug(f"{comment_data=}")
+
+        p.comment_set.create(
+            comment_text=comment,
+            pub_date=timezone.now(),
+            commenter=user,
+            **comment_data,
+        )
         # Always return an HttpResponseRedirect after successfully dealing
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         #
         # ^ source: Django Docs, Tutorial part 4
         return HttpResponseRedirect(reverse("blog:detail", args=(post_id,)))
-    else:
-        logger.error(
-            f"Couldn't find comment in the form: POST={pf(request.POST.dict())}"
-        )
-
-        return render(
-            request,
-            "blog/detail.html",
-            {
-                "post": p,
-                "comments": p.comment_set.all(),
-                "error": "we couldn't get your comment, sommry!",
-                "form": CommentForm(),
-            },
-        )

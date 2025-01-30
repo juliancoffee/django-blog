@@ -11,7 +11,11 @@ urlpatterns = [
     # isn't strictly possible now, but I left it here just as an example
     re_path("^$|^index/", blog.post.views.index, name="index"),
     path("<int:post_id>/", blog.post.views.detail, name="detail"),
-    path("<int:post_id>/comment/", blog.post.views.comment, name="comment"),
+    path(
+        "<int:post_id>/comment/",
+        blog.post.views.CommentView.as_view(),
+        name="comment",
+    ),
     # auth
     # TODO: that could be a separate Django app?
     path("accounts/login/", blog.auth.views.LoginView.as_view(), name="login"),

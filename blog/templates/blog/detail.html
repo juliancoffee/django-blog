@@ -7,12 +7,19 @@
 <span>
 
 {% if error %}
-    <h1> Error: {{ error }}</h1>
+    <h1> Error: {{ form.error }}</h1>
 {% endif %}
 {% if comments %}
     <ul>
         {% for comment in comments %}
-            <li>{{ comment.comment_text }}</li>
+            <li>
+                {% if comment.commenter %}
+                    [{{ comment.commenter.username }}]
+                {% else %}
+                    [anonymous guest]
+                {% endif %}
+                {{ comment.comment_text }}
+            </li>
         {% endfor %}
     </ul>
 {% else %}
