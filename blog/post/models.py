@@ -39,12 +39,7 @@ class Comment(models.Model):
     comment_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField("publishing date")
 
-    # TODO: these <anon> bug me to no end
-    # why I have these in the first place, because text-based fiels have two
-    # values for NULL and ... I come up with the third one
-
-    # I think 100 characters should be enough for ip addr
-    commenter_ip = models.CharField(max_length=100, default="<anon>")
+    commenter_ip = models.GenericIPAddressField(null=True)
     commenter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def __str__(self) -> str:
