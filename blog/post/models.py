@@ -38,6 +38,14 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     comment_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField("publishing date")
+
+    # TODO: these <anon> bug me to no end
+    # why I have these in the first place, because text-based fiels have two
+    # values for NULL and ... I come up with the third one
+
+    # TODO: actually we don't need commenter username, we can just link to the
+    # user that left a comment, smh
+
     # I think 100 characters should be enough for ip addr
     commenter_ip = models.CharField(max_length=100, default="<anon>")
     commenter_username = models.CharField(

@@ -12,7 +12,10 @@
 {% if comments %}
     <ul>
         {% for comment in comments %}
-            <li>{{ comment.comment_text }}</li>
+            <li>
+                [{{ comment.commenter_username }}]
+                {{ comment.comment_text }}
+            </li>
         {% endfor %}
     </ul>
 {% else %}
