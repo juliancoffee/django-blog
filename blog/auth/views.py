@@ -9,6 +9,7 @@ from django.http import (
     HttpRequest,
     HttpResponse,
 )
+from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
@@ -101,3 +102,7 @@ class SignUpView(FormView):
         login(self.request, logged_user)
 
         return super().form_valid(form)
+
+
+def profile(request: HttpRequest) -> HttpResponse:
+    return render(request, "blog/profile.html")

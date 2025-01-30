@@ -19,7 +19,8 @@
         </div>
         <div>
             {% if user.is_authenticated %}
-                <span>Account: {{ user }}</span>
+                <span>Account: </span>
+                <a href="{% url 'blog:profile' %}">{{ user }}</a>
                 <button
                     hx-post="{% url 'blog:logout' %}"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
