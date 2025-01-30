@@ -19,6 +19,7 @@ urlpatterns = [
     path(
         "accounts/signup/", blog.auth.views.SignUpView.as_view(), name="signup"
     ),
+    path("accounts/profile/", blog.auth.views.profile, name="profile"),
     # misc
     path("debug_view/", blog.debug.views.debug_view, name="debug_view"),
 ]

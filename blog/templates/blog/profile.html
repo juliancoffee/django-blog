@@ -1,0 +1,23 @@
+{% extends "./base.html" %}
+
+{% block content %}
+<ul>
+    <li>Username: {{ user.username }}</li>
+    <li>Last Login: {{ user.last_login }}</li>
+    <li>Meowing since: {{ user.date_joined }}</li>
+</ul>
+<ul>
+    <!-- TOOO: add a way to enter these -->
+    <!-- not like anyone will see it though -->
+
+    <!-- maybe email is sort of important for notifications and stuff? -->
+    <li>First Name: {{ user.first_name }}</li>
+    <li>Last Name: {{ user.last_name }}</li>
+    <li>Email: {{ user.email }}</li>
+</ul>
+<ul>
+    <li>Super User: {{ user.is_superuser }}</li>
+    <li>Staff: {{ user.is_staff }}</li>
+    <li>Still with us: {{ user.is_active }}</li>
+</ul>
+{% endblock %}
