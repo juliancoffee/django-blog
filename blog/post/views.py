@@ -70,7 +70,6 @@ def detail(request, post_id: int) -> HttpResponse:
         {
             "post": p,
             "comments": p.comment_set.all(),
-            "error": [],
             "form": CommentForm(),
         },
     )
@@ -97,13 +96,16 @@ class CommentView(FormView):
         if (ip := get_user_ip(self.request)) is not None:
             comment_data["commenter_ip"] = ip
         if self.request.user.is_authenticated:
-            comment_data["commenter_username"] = self.request.user.username
+            user = self.request.user
+        else:
+            user = None
 
         logger.debug(f"{comment_data=}")
 
         p.comment_set.create(
             comment_text=comment,
             pub_date=timezone.now(),
+            commenter=user,
             **comment_data,
         )
         # Always return an HttpResponseRedirect after successfully dealing
