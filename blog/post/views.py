@@ -94,10 +94,7 @@ class CommentView(FormView):
         comment_data = {}
         if (ip := get_user_ip(self.request)) is not None:
             comment_data["commenter_ip"] = ip
-        if self.request.user.is_authenticated:
-            user = self.request.user
-        else:
-            user = None
+        user = self.request.user if self.request.user.is_authenticated else None
 
         logger.debug(f"{comment_data=}")
 
