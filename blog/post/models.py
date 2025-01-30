@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
@@ -39,6 +40,9 @@ class Comment(models.Model):
     pub_date = models.DateTimeField("publishing date")
     # I think 100 characters should be enough for ip addr
     commenter_ip = models.CharField(max_length=100, default="<anon>")
+    commenter_username = models.CharField(
+        max_length=User._meta.get_field("username").max_length, default="<anon>"
+    )
 
     def __str__(self) -> str:
         return self.comment_text
