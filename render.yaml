@@ -9,8 +9,8 @@ services:
     plan: free
     name: juliancoffee-django-blog
     runtime: python
-    buildCommand: "./build.sh"
-    startCommand: "./hoststart.sh"
+    buildCommand: "./scripts/render/build.sh"
+    startCommand: "./scripts/render/start.sh"
     envVars:
       # the one and only django secret key
       - key: SECRET_KEY
