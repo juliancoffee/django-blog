@@ -4,15 +4,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0007_remove_comment_commenter_ip'),
+        ("blog", "0007_remove_comment_commenter_ip"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='comment',
-            old_name='commenter_ip_new',
-            new_name='commenter_ip',
+            model_name="comment",
+            old_name="commenter_ip_new",
+            new_name="commenter_ip",
         ),
     ]

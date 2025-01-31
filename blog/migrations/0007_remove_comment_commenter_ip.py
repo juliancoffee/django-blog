@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0006_comment_proper_ip'),
+        ("blog", "0006_comment_proper_ip"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='comment',
-            name='commenter_ip',
+            model_name="comment",
+            name="commenter_ip",
         ),
     ]
