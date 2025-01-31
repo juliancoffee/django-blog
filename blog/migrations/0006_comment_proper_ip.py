@@ -9,8 +9,35 @@ from django.db.models import Case, GenericIPAddressField, When
 from django.db.models.functions import Cast
 
 
-def migrate_twostep(Comment: Any) -> None:
+def migrate_with_loop(Comment: Any) -> None:
     # anyway this code is pretty straightforward
+    #
+    # loop over every comment using ORM, and do your thing
+    #
+    # if we had "<anon>" here, just place None
+    # if we had a proper ip instead, just copy it
+    #
+    # ORM should properly convert all the types, yes? yes?
+    #
+    # NOTE: The obvious disadvantage is that its all done outside of database,
+    # which isn't a big problem if we have two rows, but yeah, that's still
+    # *highly* inefficient, because we need to move all the data over the wire
+    # and into the application memory.
+    #
+    # Not so obvious disadvantage of doing it this way is that, well, if you
+    # forget to call .save(), your migration pretty much didn't run at all.
+    for comment in Comment.objects.all():
+        if comment.commenter_ip == "<anon>":
+            comment.commenter_ip_new = None
+        else:
+            comment.commenter_ip_new = comment.commenter_ip
+
+        # NOTE: don't forget to save!!
+        comment.save()
+
+
+def migrate_with_twostep(Comment: Any) -> None:
+    # anyway this code is pretty str
     #
     # if we had "<anon>" here, just place None
     # if we had a proper ip instead, just copy it
@@ -59,7 +86,7 @@ def migrate_to_proper_ip(apps, _schema_editor):
     # in application root at models.py or models/__init__.py otherwise ORM
     # may break ... so yeah, I should fix it ^^'
     Comment = apps.get_model("blog", "Comment")
-    migrate_with_case(Comment)
+    migrate_with_twostep(Comment)
 
 
 class Migration(migrations.Migration):
