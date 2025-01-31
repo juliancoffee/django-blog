@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0004_remove_comment_commenter_username_comment_commenter'),
+        ("blog", "0004_remove_comment_commenter_username_comment_commenter"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='comment',
-            name='commenter_ip_new',
+            model_name="comment",
+            name="commenter_ip_new",
             field=models.GenericIPAddressField(null=True),
         ),
     ]

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0002_comment_commenter_ip'),
+        ("blog", "0002_comment_commenter_ip"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='comment',
-            name='commenter_username',
-            field=models.CharField(default='<anon>', max_length=150),
+            model_name="comment",
+            name="commenter_username",
+            field=models.CharField(default="<anon>", max_length=150),
         ),
     ]

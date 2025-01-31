@@ -91,18 +91,13 @@ class CommentView(FormView):
         p = get_object_or_404(Post, pk=post_id)
 
         comment = form.cleaned_data["comment"]
-        comment_data = {}
-        if (ip := get_user_ip(self.request)) is not None:
-            comment_data["commenter_ip"] = ip
         user = self.request.user if self.request.user.is_authenticated else None
-
-        logger.debug(f"{comment_data=}")
 
         p.comment_set.create(
             comment_text=comment,
             pub_date=timezone.now(),
             commenter=user,
-            **comment_data,
+            commenter_ip=get_user_ip(self.request),
         )
         # Always return an HttpResponseRedirect after successfully dealing
         # with POST data. This prevents data from being posted twice if a
