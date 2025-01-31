@@ -31,7 +31,7 @@ django_settings_module = "mysite.settings"
 
 [tool.ruff]
 line-length = 80
-exclude = ["**/migrations/**"]
+#extend-exclude = ["**/migrations/**"]
 
 [tool.ruff.lint]
 select = [
