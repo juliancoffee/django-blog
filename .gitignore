@@ -6,3 +6,6 @@ db.sqlite3
 
 # files that are explicitly hidden
 .env
+
+# todo
+*todo*
