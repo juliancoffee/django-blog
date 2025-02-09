@@ -50,7 +50,9 @@ fi
 if [ -f "$res" ]
 then
     echo "you sure you want to overwrite the file? y/N"
-    read answer
+    # shellcheck made me add `-r`
+    # it allows backslashes to appear in the input without escaping them
+    read -r answer
     case "$answer" in
         "y")
             ;;
@@ -63,7 +65,7 @@ fi
 docker cp "$container":dump.sql - | tar -x --to-stdout > "$res"
 
 print_green "protecting from writes..."
-chmod -w $res
+chmod -w "$res"
 
 print_green "done."
-ls -lth $res
+ls -lth "$res"
