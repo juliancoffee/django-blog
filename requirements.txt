@@ -4,7 +4,7 @@ asgiref==3.8.1
     # via django
 brotli==1.1.0
     # via whitenoise
-django==5.1.5
+django==5.1.6
     # via django-blog (pyproject.toml)
 gunicorn==23.0.0
     # via django-blog (pyproject.toml)
@@ -22,5 +22,5 @@ typing-extensions==4.12.2
     # via psycopg
 verbose-csrf-middleware==1.0.4
     # via django-blog (pyproject.toml)
-whitenoise==6.8.2
+whitenoise==6.9.0
     # via django-blog (pyproject.toml)
