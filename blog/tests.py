@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .easter import PredictionGenerator
-from .post.models import Post
+from .models import Post
 
 # Create your tests here
 
