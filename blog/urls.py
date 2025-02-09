@@ -1,6 +1,5 @@
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 
-import blog.auth.views
 import blog.debug.views
 import blog.post.views
 
@@ -17,13 +16,7 @@ urlpatterns = [
         name="comment",
     ),
     # auth
-    # TODO: that could be a separate Django app?
-    path("accounts/login/", blog.auth.views.LoginView.as_view(), name="login"),
-    path("accounts/logout/", blog.auth.views.instant_logout, name="logout"),
-    path(
-        "accounts/signup/", blog.auth.views.SignUpView.as_view(), name="signup"
-    ),
-    path("accounts/profile/", blog.auth.views.profile, name="profile"),
+    path("accounts/", include("blog.accounts.urls")),
     # misc
     path("debug_view/", blog.debug.views.debug_view, name="debug_view"),
 ]
