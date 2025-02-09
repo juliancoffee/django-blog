@@ -3,6 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-alpine
 # Don't cache index to reduce size
 # Btw, the reason why I install bash is that I can use time command in scripts
 RUN apk add --no-cache bash
+#RUN apk add --no-cache neovim
 
 # So I don't actually know if I need to do any of that, really
 # but it doesn't seem to work otherwise, idk
