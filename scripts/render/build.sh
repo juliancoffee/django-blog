@@ -2,7 +2,7 @@
 set -o errexit
 
 echo "<> installing dependencies"
-pip install -r requirements.txt
+pip install -r requirements_lock.txt
 
 echo "<> collecting static files"
 python manage.py collectstatic --no-input
