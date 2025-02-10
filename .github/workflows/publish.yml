@@ -10,6 +10,32 @@ name: Publish
 on: [pull_request]
 
 jobs:
+  check-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.7"
+
+      - name: Generate dependency file
+        run: uv export --format requirements-txt > requirements_lock_new.txt
+
+      - name: Diff dependency files
+        run: |
+          if ! diff requirements_lock.txt requirements_lock_new.txt
+          then
+            echo "requirements_lock.txt needs an update"
+            exit 1
+          else
+            exit 0
+          fi
+
   check:
     runs-on: ubuntu-latest
     steps:
