@@ -24,13 +24,13 @@ jobs:
           version: "0.5.7"
 
       - name: Generate dependency file
-        run: uv pip compile pyproject.toml > requirements_new.txt
+        run: uv export --format requirements-txt > requirements_lock_new.txt
 
       - name: Diff dependency files
         run: |
-          if ! diff requirements.txt requirements_new.txt
+          if ! diff requirements_lock.txt requirements_lock_new.txt
           then
-            echo "requirements.txt needs an update"
+            echo "requirements_lock.txt needs an update"
             exit 1
           else
             exit 0
