@@ -1,9 +1,14 @@
+import io
+import json
+import logging
 from datetime import datetime
 from typing import Optional, TypedDict
 
 from django.http import FileResponse
 
 from blog.models import Post
+
+logger = logging.getLogger(__name__)
 
 # TODO: should we use something better here? can we?
 # It's all will get converted to JSON anyway, and it doesn't do dates.
@@ -66,4 +71,19 @@ def get_all_data() -> ExportData:
 
 # Create your views here.
 def export(request) -> FileResponse:
-    raise NotImplementedError
+    # TODO: this should probably have some filtering and stuff, because we're
+    # practically loading our whole database into memory at once, but whatever.
+    #
+    # For now, my blog doesn't have any users except me, really, so it's ok.
+
+    databuff = io.BytesIO()
+    data = get_all_data()
+
+    # I couldn't get json output the data into the buffer, mypy was mad at me.
+    #
+    # It is happy with this code although it's probably less efficient.
+    databuff.write(json.dumps(data).encode())
+    # NOTE: don't forget to seek to the beginning
+    databuff.seek(0)
+
+    return FileResponse(databuff, as_attachment=True, filename="data.json")

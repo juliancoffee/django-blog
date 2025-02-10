@@ -1,6 +1,7 @@
 from django.urls import include, path, re_path
 
 import blog.debug.views
+import blog.export.views
 import blog.views
 
 app_name = "blog"
@@ -17,6 +18,8 @@ urlpatterns = [
     ),
     # auth
     path("accounts/", include("blog.accounts.urls")),
+    # export/import
+    path("export/", blog.export.views.export, name="export"),
     # misc
     path("debug_view/", blog.debug.views.debug_view, name="debug_view"),
 ]

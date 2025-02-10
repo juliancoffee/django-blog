@@ -20,6 +20,7 @@
     {% if user.is_staff %}
     {% comment %} for some reason I can't use reverse url here {% endcomment %}
     <li>Staff: <a href="/admin">Yes, go</a></li>
+    <li><a href="{% url 'blog:export' %}">Export data</a></li>
     {% else %}
     <li>Staff: Nope</li>
     {% endif %}
