@@ -7,7 +7,7 @@
 
 <div id="login-form">
     <h1> Login here, if you are friend!</h1>
-    <form id="login-form" action="{% url 'blog:login' %}" method="post">
+    <form id="login-form" action="{% url 'blog:accounts:login' %}" method="post">
         {% csrf_token %}
 
         {{form}}
@@ -18,7 +18,7 @@
     </form>
 </div>
 
-<a href="{% url 'blog:signup' %}">
+<a href="{% url 'blog:accounts:signup' %}">
     <p>We don't know each other yet? Let's fix this!</p>
 </a>
 {% endblock %}

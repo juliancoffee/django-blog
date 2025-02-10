@@ -20,13 +20,15 @@
         <div>
             {% if user.is_authenticated %}
                 <span>Account: </span>
-                <a href="{% url 'blog:profile' %}">{{ user }}</a>
+                <a href="{% url 'blog:accounts:profile' %}">{{ user }}</a>
                 <button
-                    hx-post="{% url 'blog:logout' %}"
+                    hx-post="{% url 'blog:accounts:logout' %}"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                 >Log out</button>
             {% else %}
-                <a href="{% url 'blog:login' %}">You don't have an account? 👀</a>
+                <a href="{% url 'blog:accounts:login' %}">
+                    You don't have an account? 👀
+                </a>
             {% endif %}
         </div>
     </header>

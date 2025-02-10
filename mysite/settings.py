@@ -52,7 +52,10 @@ if EXTERNAL_HOSTNAME:
 # Application definition
 
 INSTALLED_APPS = [
-    "blog.apps.BlogConfig",
+    # ours
+    "blog.accounts",
+    "blog",
+    # django contrib
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
