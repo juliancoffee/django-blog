@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Optional, TypedDict
 
-from django.http import FileResponse
+from django.http import FileResponse, HttpRequest, HttpResponse
 
 from blog.models import Post
 
@@ -70,12 +70,19 @@ def get_all_data() -> ExportData:
 
 
 # Create your views here.
-def export(request) -> FileResponse:
+def export(request: HttpRequest) -> HttpResponse | FileResponse:
+    # NOTE: we know that all users are authorized, because of login required
+    # middleware.
+    #
+    # I'm not sure I like the fact that it is so implicit and can't be inferred
+    # from the function body, but whatever.
+    if not request.user.is_staff:
+        return HttpResponse("nope, you can't do that", status=403)
+
     # TODO: this should probably have some filtering and stuff, because we're
     # practically loading our whole database into memory at once, but whatever.
     #
     # For now, my blog doesn't have any users except me, really, so it's ok.
-
     databuff = io.BytesIO()
     data = get_all_data()
 
