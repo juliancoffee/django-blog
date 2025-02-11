@@ -19,8 +19,15 @@
     <li>Super User: {{ user.is_superuser }}</li>
     {% if user.is_staff %}
     {% comment %} for some reason I can't use reverse url here {% endcomment %}
-    <li>Staff: <a href="/admin">Yes, go</a></li>
-    <li><a href="{% url 'blog:export' %}">Export data</a></li>
+    <li>Staff: <a href="/admin">
+            Yes, go to the admin page
+        </a>
+    </li>
+    <li>
+        Staff: <a href="{% url 'blog:export_page' %}">
+            Yes, go to the data management page
+        </a>
+    </li>
     {% else %}
     <li>Staff: Nope</li>
     {% endif %}

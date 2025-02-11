@@ -19,7 +19,14 @@ urlpatterns = [
     # auth
     path("accounts/", include("blog.accounts.urls")),
     # export/import
-    path("export/", blog.export.views.export, name="export"),
+    path("data_management/", blog.export.views.export_page, name="export_page"),
+    path("export/", blog.export.views.export_data, name="export"),
+    path("import/", blog.export.views.import_data, name="import"),
+    path(
+        "import_preview/",
+        blog.export.views.import_preview,
+        name="import_preview",
+    ),
     # misc
     path("debug_view/", blog.debug.views.debug_view, name="debug_view"),
 ]

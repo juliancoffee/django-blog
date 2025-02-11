@@ -4,9 +4,14 @@ import logging
 from datetime import datetime
 from typing import Optional, TypedDict
 
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import AnonymousUser, User
 from django.http import FileResponse, HttpRequest, HttpResponse
+from django.shortcuts import render
 
 from blog.models import Post
+
+from .forms import ImportDataForm
 
 logger = logging.getLogger(__name__)
 
@@ -69,16 +74,36 @@ def get_all_data() -> ExportData:
     }
 
 
-# Create your views here.
-def export(request: HttpRequest) -> HttpResponse | FileResponse:
-    # NOTE: we know that all users are authorized, because of login required
-    # middleware.
-    #
-    # I'm not sure I like the fact that it is so implicit and can't be inferred
-    # from the function body, but whatever.
-    if not request.user.is_staff:
-        return HttpResponse("nope, you can't do that", status=403)
 
+# We know that all users are authorized, because of LoginRequiredMiddleware
+#
+# I'm not sure I like the fact that it is so implicit and can't be inferred
+# from the function body, but whatever.
+#
+# Also I don't like that fact that our authentication check is automatic,
+# but our authorization check can be ignored.
+#
+# Of course, you can't automate authorization, but can't we at least have
+# some catch-all check that forbids every request, unless configured?
+def user_is_staff_check(user: User | AnonymousUser) -> bool:
+    return user.is_staff
+
+
+# Create your views here.
+@user_passes_test(user_is_staff_check)
+def export_page(request: HttpRequest) -> HttpResponse:
+    form = ImportDataForm()
+    return render(
+        request,
+        "blog/export_page.html",
+        {
+            "form": form,
+        },
+    )
+
+
+@user_passes_test(user_is_staff_check)
+def export_data(request: HttpRequest) -> HttpResponse | FileResponse:
     # TODO: this should probably have some filtering and stuff, because we're
     # practically loading our whole database into memory at once, but whatever.
     #
@@ -94,3 +119,24 @@ def export(request: HttpRequest) -> HttpResponse | FileResponse:
     databuff.seek(0)
 
     return FileResponse(databuff, as_attachment=True, filename="data.json")
+
+# Shouldn't we return something here? Status or smth.
+# Just raise an exception?
+#
+# Gosh, how do people live without enums.
+def parse_data() -> ExportData:
+    raise NotImplementedError
+
+
+def load_all_data() -> None:
+    raise NotImplementedError
+
+
+@user_passes_test(user_is_staff_check)
+def import_preview(request: HttpRequest) -> HttpResponse:
+    return HttpResponse("hey you")
+
+
+@user_passes_test(user_is_staff_check)
+def import_data(request: HttpRequest) -> HttpResponse:
+    return HttpResponse("<p> sommry, not implemented yet </p>")
