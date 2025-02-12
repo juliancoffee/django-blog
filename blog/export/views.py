@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 
 from blog.models import Post
 
@@ -103,7 +104,14 @@ def export_page(request: HttpRequest) -> HttpResponse:
 
 
 @user_passes_test(user_is_staff_check)
-def export_data(request: HttpRequest) -> HttpResponse | FileResponse:
+def export_data(request: HttpRequest) -> HttpResponse:
+    response = HttpResponse()
+    response.headers["HX-Redirect"] = reverse("blog:export_file")
+    return response
+
+
+@user_passes_test(user_is_staff_check)
+def export_datafile(request: HttpRequest) -> HttpResponse | FileResponse:
     # TODO: this should probably have some filtering and stuff, because we're
     # practically loading our whole database into memory at once, but whatever.
     #
