@@ -14,7 +14,7 @@ from django.urls import reverse
 
 from blog.models import Post
 
-from .forms import ImportDataForm
+from .forms import ImportDataForm, ExportDataForm
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +57,20 @@ def get_post_data() -> list[PostData]:
         post_data: PostData = {
             "post_text": post.post_text,
             "pub_date": format_date(post.pub_date),
-            # TODO: add comments
-            "comments": [],
+            "comments": [
+                {
+                    "comment_text": comment.comment_text,
+                    "pub_date": format_date(comment.pub_date),
+                    # TODO: add users
+                    "username": None,
+                    "ip": comment.commenter_ip,
+                }
+                for comment in post.comment_set.all()
+            ],
         }
         res.append(post_data)
 
-    return res
+    return sorted(res, key=lambda p: datetime.fromisoformat(p["pub_date"]))
 
 
 def get_user_data() -> list[UserData]:
@@ -94,23 +102,27 @@ def user_is_staff_check(user: User | AnonymousUser) -> bool:
 # Create your views here.
 @user_passes_test(user_is_staff_check)
 def export_page(request: HttpRequest) -> HttpResponse:
-    form = ImportDataForm()
+    import_form = ImportDataForm()
+    export_form = ExportDataForm()
     return render(
         request,
         "blog/export_page.html",
         {
-            "form": form,
+            "import_form": import_form,
+            "export_form": export_form,
         },
     )
 
 
-@user_passes_test(user_is_staff_check)
-def export_data(request: HttpRequest) -> HttpResponse:
-    response = HttpResponse()
-    response.headers["HX-Redirect"] = reverse("blog:export_file")
-    return response
-
-
+# NOTE: It's a GET request, but we're safe.
+#
+# The only case where this might be a problem is if another browser makes
+# a fetch request behind the scenes, but CORS policies wouldn't allow that.
+#
+# - If you just visit this page via browser, that's completely fine, we will
+# check authentication and authorization server-side.
+# - If you visit this page with something like a `curl`, you simply won't pass
+# auth.
 @user_passes_test(user_is_staff_check)
 def export_datafile(request: HttpRequest) -> HttpResponse | FileResponse:
     # TODO: this should probably have some filtering and stuff, because we're
@@ -127,7 +139,11 @@ def export_datafile(request: HttpRequest) -> HttpResponse | FileResponse:
     # NOTE: don't forget to seek to the beginning
     databuff.seek(0)
 
-    return FileResponse(databuff, as_attachment=True, filename="data.json")
+    return FileResponse(
+        databuff,
+        as_attachment="download" in request.GET,
+        filename="data.json",
+    )
 
 
 @dataclass
@@ -149,6 +165,7 @@ class ImportData:
 def parse_import_data(request: HttpRequest) -> Optional[ImportData]:
     form = ImportDataForm(request.POST, request.FILES)
     if not form.is_valid():
+        # TODO: make HTMX work with this
         raise RuntimeError("form is invalid, {form.errors.get_json_data()}")
 
     data_file = request.FILES["data_file"]
@@ -156,6 +173,7 @@ def parse_import_data(request: HttpRequest) -> Optional[ImportData]:
     assert isinstance(data_file, UploadedFile)
 
     if data_file.content_type != "application/json":
+        # TODO: make HTMX work with this
         raise RuntimeError(
             f"expected application/json, got {data_file.content_type}"
         )

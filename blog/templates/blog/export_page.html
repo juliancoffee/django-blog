@@ -1,19 +1,19 @@
 {% extends "./base.html" %}
 
 {% block content %}
+    <!-- Import widget -->
     <h1>Import data</h1>
-    <div id="import-preview">
-    </div>
+    <div id="import-preview"></div>
 
     <!-- NOTE:
         encoding is important here, you can't upload files without proper encoding
     -->
     <form
-        id="import-form"
+        class="list-form"
         hx-encoding="multipart/form-data"
     >
         {% csrf_token %}
-        {{ form }}
+        {{ import_form }}
 
         <button
             hx-post="{% url 'blog:import_preview' %}"
@@ -25,10 +25,13 @@
             hx-target="#import-results"
         >Yes, import the data from this '.json' file</button>
     </form>
-    <div id="import-results">
-    </div>
+    <div id="import-results"></div>
+    <!-- Export widget -->
     <h1> Export Data </h1>
-    <button hx-get="{% url 'blog:export' %}">
-        Export the data as ".json" file
-    </button>
+    <form class="list-form" action="{% url 'blog:export_file' %}" method=GET>
+        {{ export_form }}
+        <button>
+            Export the data as ".json" file
+        </button>
+    </form>
 {% endblock %}

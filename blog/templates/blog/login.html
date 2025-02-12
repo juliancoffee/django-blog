@@ -5,9 +5,9 @@
     <p>The page you're trying to access requires login.</p>
 {% endif %}
 
-<div id="login-form">
+<div class="list-form">
     <h1> Login here, if you are friend!</h1>
-    <form id="login-form" action="{% url 'blog:accounts:login' %}" method="post">
+    <form class="list-form" action="{% url 'blog:accounts:login' %}" method="post">
         {% csrf_token %}
 
         {{form}}

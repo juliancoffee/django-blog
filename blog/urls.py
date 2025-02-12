@@ -20,7 +20,6 @@ urlpatterns = [
     path("accounts/", include("blog.accounts.urls")),
     # export/import
     path("data_management/", blog.export.views.export_page, name="export_page"),
-    path("export/", blog.export.views.export_data, name="export"),
     path("export-file/", blog.export.views.export_datafile, name="export_file"),
     path("import/", blog.export.views.import_data, name="import"),
     path(
