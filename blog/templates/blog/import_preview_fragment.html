@@ -1,0 +1,6 @@
+{# for use with htmx, not a full document #}
+<ul>
+{% for post in data.posts %}
+    <li>{{ post.post_text }}</li>
+{% endfor %}
+</ul>

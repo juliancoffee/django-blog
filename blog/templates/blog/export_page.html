@@ -4,7 +4,14 @@
     <h1>Import data</h1>
     <div id="import-preview">
     </div>
-    <form id="import-form">
+
+    <!-- NOTE:
+        encoding is important here, you can't upload files without proper encoding
+    -->
+    <form
+        id="import-form"
+        hx-encoding="multipart/form-data"
+    >
         {% csrf_token %}
         {{ form }}
 

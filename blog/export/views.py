@@ -1,11 +1,13 @@
 import io
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, TypedDict
 
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import AnonymousUser, User
+from django.core.files.uploadedfile import UploadedFile
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -75,7 +77,6 @@ def get_all_data() -> ExportData:
     }
 
 
-
 # We know that all users are authorized, because of LoginRequiredMiddleware
 #
 # I'm not sure I like the fact that it is so implicit and can't be inferred
@@ -128,21 +129,56 @@ def export_datafile(request: HttpRequest) -> HttpResponse | FileResponse:
 
     return FileResponse(databuff, as_attachment=True, filename="data.json")
 
-# Shouldn't we return something here? Status or smth.
+
+@dataclass
+class ImportPostData:
+    post_text: str
+    pub_date: datetime
+
+
+@dataclass
+# TODO: add users
+class ImportData:
+    posts: list[ImportPostData]
+
+
+# Shouldn't we return something here? Status code or smth.
 # Just raise an exception?
 #
 # Gosh, how do people live without enums.
-def parse_data() -> ExportData:
-    raise NotImplementedError
+def parse_import_data(request: HttpRequest) -> Optional[ImportData]:
+    form = ImportDataForm(request.POST, request.FILES)
+    if not form.is_valid():
+        raise RuntimeError("form is invalid, {form.errors.get_json_data()}")
+
+    data_file = request.FILES["data_file"]
+    # WHY DJANGO, WHY?
+    assert isinstance(data_file, UploadedFile)
+
+    if data_file.content_type != "application/json":
+        raise RuntimeError(
+            f"expected application/json, got {data_file.content_type}"
+        )
+    raw_data = data_file.read()
+    json_data: ExportData = json.loads(raw_data)
+
+    posts: list[ImportPostData] = []
+    for post in json_data["posts"]:
+        text = post["post_text"]
+        date = datetime.fromisoformat(post["pub_date"])
+        posts.append(ImportPostData(text, date))
+    parsed_data = ImportData(posts=posts)
+    return parsed_data
 
 
-def load_all_data() -> None:
+def load_all_data_in() -> None:
     raise NotImplementedError
 
 
 @user_passes_test(user_is_staff_check)
 def import_preview(request: HttpRequest) -> HttpResponse:
-    return HttpResponse("hey you")
+    data = parse_import_data(request)
+    return render(request, "blog/import_preview_fragment.html", {"data": data})
 
 
 @user_passes_test(user_is_staff_check)
