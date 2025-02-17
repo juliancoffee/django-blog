@@ -10,11 +10,10 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.files.uploadedfile import UploadedFile
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
-from django.urls import reverse
 
 from blog.models import Post
 
-from .forms import ImportDataForm, ExportDataForm
+from .forms import ExportDataForm, ImportDataForm
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +22,12 @@ logger = logging.getLogger(__name__)
 DateTime = str
 
 
-class UserData(TypedDict):
+class ExportUserData(TypedDict):
     # that's all for now
     username: str
 
 
-class CommentData(TypedDict):
+class ExportCommentData(TypedDict):
     comment_text: str
     pub_date: DateTime
     # NOTE: should be connected with username in UserData
@@ -36,25 +35,25 @@ class CommentData(TypedDict):
     ip: Optional[str]
 
 
-class PostData(TypedDict):
+class ExportPostData(TypedDict):
     post_text: str
     pub_date: DateTime
-    comments: list[CommentData]
+    comments: list[ExportCommentData]
 
 
 class ExportData(TypedDict):
-    posts: list[PostData]
-    users: list[UserData]
+    posts: list[ExportPostData]
+    users: list[ExportUserData]
 
 
 def format_date(d: datetime) -> str:
     return d.isoformat()
 
 
-def get_post_data() -> list[PostData]:
+def get_post_data() -> list[ExportPostData]:
     res = []
     for post in Post.objects.all():
-        post_data: PostData = {
+        post_data: ExportPostData = {
             "post_text": post.post_text,
             "pub_date": format_date(post.pub_date),
             "comments": [
@@ -73,7 +72,7 @@ def get_post_data() -> list[PostData]:
     return sorted(res, key=lambda p: datetime.fromisoformat(p["pub_date"]))
 
 
-def get_user_data() -> list[UserData]:
+def get_user_data() -> list[ExportUserData]:
     # TODO: implement
     return []
 
@@ -147,15 +146,38 @@ def export_datafile(request: HttpRequest) -> HttpResponse | FileResponse:
 
 
 @dataclass
+class ImportCommentData:
+    comment_text: str
+    pub_date: datetime
+    ip: Optional[str]
+
+
+@dataclass
 class ImportPostData:
     post_text: str
     pub_date: datetime
+    comments: list[ImportCommentData]
 
 
 @dataclass
 # TODO: add users
 class ImportData:
     posts: list[ImportPostData]
+
+
+def convert_post(json_post: ExportPostData) -> ImportPostData:
+    text = json_post["post_text"]
+    date = datetime.fromisoformat(json_post["pub_date"])
+
+    comments = list(map(convert_comment, json_post["comments"]))
+    return ImportPostData(post_text=text, pub_date=date, comments=comments)
+
+
+def convert_comment(json_comment: ExportCommentData) -> ImportCommentData:
+    text = json_comment["comment_text"]
+    date = datetime.fromisoformat(json_comment["pub_date"])
+    ip = json_comment["ip"]
+    return ImportCommentData(comment_text=text, pub_date=date, ip=ip)
 
 
 # Shouldn't we return something here? Status code or smth.
@@ -177,14 +199,11 @@ def parse_import_data(request: HttpRequest) -> Optional[ImportData]:
         raise RuntimeError(
             f"expected application/json, got {data_file.content_type}"
         )
+
     raw_data = data_file.read()
     json_data: ExportData = json.loads(raw_data)
+    posts = list(map(convert_post, json_data["posts"]))
 
-    posts: list[ImportPostData] = []
-    for post in json_data["posts"]:
-        text = post["post_text"]
-        date = datetime.fromisoformat(post["pub_date"])
-        posts.append(ImportPostData(text, date))
     parsed_data = ImportData(posts=posts)
     return parsed_data
 
