@@ -23,6 +23,10 @@
         <button
             hx-post="{% url 'blog:import' %}"
             hx-target="#import-results"
+            hx-confirm="
+            Are you sure you wish to import the data?
+            I hope you do have backups!
+            "
         >Yes, import the data from this '.json' file</button>
     </form>
     <div id="import-results"></div>

@@ -8,6 +8,7 @@ from typing import Optional, TypedDict
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.files.uploadedfile import UploadedFile
+from django.db import transaction
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 
@@ -184,7 +185,7 @@ def convert_comment(json_comment: ExportCommentData) -> ImportCommentData:
 # Just raise an exception?
 #
 # Gosh, how do people live without enums.
-def parse_import_data(request: HttpRequest) -> Optional[ImportData]:
+def parse_import_data(request: HttpRequest) -> ImportData:
     form = ImportDataForm(request.POST, request.FILES)
     if not form.is_valid():
         # TODO: make HTMX work with this
@@ -208,16 +209,81 @@ def parse_import_data(request: HttpRequest) -> Optional[ImportData]:
     return parsed_data
 
 
-def load_all_data_in() -> None:
-    raise NotImplementedError
-
-
 @user_passes_test(user_is_staff_check)
 def import_preview(request: HttpRequest) -> HttpResponse:
     data = parse_import_data(request)
     return render(request, "blog/import_preview_fragment.html", {"data": data})
 
 
+@transaction.atomic
+def load_all_data_in(request: HttpRequest) -> Optional[tuple[int, int]]:
+    # Logic considerations:
+    #
+    # 1) We probably don't want to duplicate existing posts.
+    # Yeah, hopefully string-equality algorithms are fast enough.
+    # 2) What should we do if existing post has different set of comments?
+    # For now, we'll just ignore the post if it exists.
+    # 3) Should we create users if they don't exist?
+    # For now, we don't have users.
+    # 4) Should we assign comments to existing users, if found?
+    # For now, we don't have user info to comments.
+
+    # Perfomance considerations:
+    # - First of all, that's the coldest code possible, it's supposed to run once
+    # per ... month, at best.
+    # - Additionally, I think the slowest part would be data-fetching, so we're
+    # doing that only once.
+    #
+    # Well, except then we're doing data-insert, which would be much slower, but
+    # maybe Django's ORM can optimise it somehow?
+
+    # Integrity considertations:
+    # - The function is wrapped with @transaction.atomic, it will do automatic
+    # rollback if any exception is encountered
+
+    data = parse_import_data(request)
+    # Algorithmic shenanigans
+    # Build skiplist for duplicates via two O(n) passes instead of a nested loop
+    post_map: dict[str, ImportPostData] = {p.post_text: p for p in data.posts}
+    duplicates: set[str] = set(
+        p.post_text for p in Post.objects.all() if p.post_text in post_map
+    )
+
+    post_counter = 0
+    comment_counter = 0
+    for text, post in post_map.items():
+        if text in duplicates:
+            continue
+
+        p = Post(post_text=post.post_text, pub_date=post.pub_date)
+        p.save()
+        post_counter += 1
+
+        for c in post.comments:
+            p.comment_set.create(
+                comment_text=c.comment_text,
+                pub_date=c.pub_date,
+                commenter_ip=c.ip,
+            )
+            comment_counter += 1
+
+    return post_counter, comment_counter
+
+
 @user_passes_test(user_is_staff_check)
 def import_data(request: HttpRequest) -> HttpResponse:
-    return HttpResponse("<p> sommry, not implemented yet </p>")
+    counters = None
+    try:
+        counters = load_all_data_in(request)
+    except Exception:
+        logger.error("failed to import the data", exc_info=True)
+
+    if counters is not None:
+        posts, comments = counters
+        return HttpResponse(
+            "<p>import completed! {} posts, {} comments </p>".format(
+                posts, comments
+            )
+        )
+    else:
+        return HttpResponse("<p>sommry, something went wrong</p>")
