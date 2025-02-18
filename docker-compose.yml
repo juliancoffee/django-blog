@@ -8,6 +8,7 @@ services:
       - 127.0.0.1:5432:5432
     volumes:
       - database:/var/lib/postgresql/data
+      #- test_database:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
@@ -40,15 +41,6 @@ services:
         - action: rebuild
           path: ./uv.lock
 
-        # rebuild the image if Dockefile changes
-        # how tf this isn't the default?
-        - action: rebuild
-          path: ./Dockerfile
-
-        # same as above
-        - action: rebuild
-          path: ./docker-compose.yml
-
         # runserver has hot-reload, so sync will do
         #
         # gunicorn has it too, if you configure it, but it doesn't seem to
@@ -68,3 +60,4 @@ services:
 
 volumes:
   database:
+    #test_database:

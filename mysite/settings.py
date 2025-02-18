@@ -54,6 +54,7 @@ if EXTERNAL_HOSTNAME:
 INSTALLED_APPS = [
     # ours
     "blog.accounts",
+    "blog.export",
     "blog",
     # django contrib
     "django.contrib.admin",

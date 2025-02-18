@@ -1,0 +1,18 @@
+{# for use with htmx, not a full document #}
+<ul>
+{% for post in data.posts %}
+    <li>{{ post.post_text }} <sup>{{ post.pub_date }}</sup>
+        <ul>
+            {% for comment in post.comments %}
+                <li>
+                    {{ comment.comment_text }}
+                    <sup>[
+                        date={{ comment.pub_date }},
+                        ip={{ comment.ip }}
+                    ]</sup>
+                </li>
+            {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+</ul>

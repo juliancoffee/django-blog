@@ -3,7 +3,7 @@
     --red: #662b2b;
 }
 
-h1, li, p, pre, span, form label {
+h1, a, li, p, pre, span, form label {
     background: var(--pink);
 }
 
@@ -28,7 +28,7 @@ body {
     margin: 0.1rem;
 }
 
-#login-form {
+.list-form {
     /* center the content inside
      *
      * the fun thing is we don't even need to center a div itself.
@@ -40,7 +40,7 @@ body {
     align-items: center;
 }
 
-#login-form input[type="submit"], button {
+.list-form input[type="submit"], button {
     background: white;
 }
 
