@@ -1,5 +1,15 @@
 {% extends "./base.html" %}
 
 {% block content %}
-    <p> Nothing to see here, yet... </p>
+<form
+    class="list-form"
+    action="{% url 'blog:notifications:settings' %}"
+    method="POST"
+>
+    {% csrf_token %}
+
+    {{ form }}
+
+    <input type="submit" value="Save settings">
+</form>
 {% endblock %}
