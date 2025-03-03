@@ -159,6 +159,16 @@ class IntegrationTests(TestCase):
         3. Updates preferences
         4. Verifies changes when revisiting the page
         """
+        # p. s.
+        # originally this code didn't work, because we had smth like
+        # form["to_new_posts"].initial
+        #
+        # I changed it to form.data["to_new_posts"]
+        #
+        # and now we're using ModelForm, and form.data simply doesn't exist
+        #
+        # god I hate Django forms, they are absolutely the worst
+
         self.client.login(username="testuser", password="testpassword")
         settings_url = reverse("blog:notifications:settings")
 
@@ -166,8 +176,8 @@ class IntegrationTests(TestCase):
         response = self.client.get(settings_url)
         self.assertEqual(response.status_code, 200)
         form = response.context["form"]
-        self.assertFalse(form.data["to_new_posts"])
-        self.assertFalse(form.data["to_engaged_posts"])
+        self.assertFalse(form.instance.to_new_posts)
+        self.assertFalse(form.instance.to_engaged_posts)
 
         # Update preferences
         response = self.client.post(
@@ -178,5 +188,5 @@ class IntegrationTests(TestCase):
         # Visit again - form should now show checked values
         response = self.client.get(settings_url)
         form = response.context["form"]
-        self.assertTrue(form.data["to_new_posts"])
-        self.assertTrue(form.data["to_engaged_posts"])
+        self.assertTrue(form.instance.to_new_posts)
+        self.assertTrue(form.instance.to_engaged_posts)

@@ -44,14 +44,9 @@ def settings_page(request: HttpRequest) -> HttpResponse:
     # this page requires auth, plus we're using LoginRequiredMiddleware
     assert request.user.is_authenticated
 
-    user_subs = Subscription.objects.get_or_create(user=request.user)[0]
-    form_data = {
-        "to_new_posts": user_subs.to_new_posts,
-        "to_engaged_posts": user_subs.to_engaged_posts,
-    }
-
     # pre-populate the form
-    form = SubscribeForm(form_data)
+    user_subs = Subscription.objects.get_or_create(user=request.user)[0]
+    form = SubscribeForm(instance=user_subs)
 
     return render(
         request,
