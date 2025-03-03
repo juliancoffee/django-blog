@@ -3,6 +3,8 @@ from django import forms
 
 # TODO: look into ModelForm?
 #
+# This would allow us using "instance"
+#
 # And ideally typed using django-stubs
 class SubscribeForm(forms.Form):
     to_new_posts = forms.BooleanField(
