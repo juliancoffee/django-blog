@@ -1,11 +1,10 @@
 import logging
 
-from django.contrib.auth.models import User
-from django.db.models import BooleanField, Case, Value, When
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from .forms import SubscribeForm
+from .models import Subscription
 
 logger = logging.getLogger(__name__)
 
@@ -16,34 +15,22 @@ def handle_settings_update(request: HttpRequest) -> HttpResponse:
 
 
 def settings_page(request: HttpRequest) -> HttpResponse:
-    user_subs = (
-        User.objects.filter(id=request.user.id)
-        .annotate(
-            to_new_posts=Case(
-                When(newpostsubscriber__isnull=False, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
-            to_engaged_posts=Case(
-                When(engagedpostsubscriber__isnull=False, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
-        )
-        .first()
-    )
-    assert user_subs is not None
+    # this page requires auth, plus we're using LoginRequiredMiddleware
+    assert request.user.is_authenticated
 
-    # pre-populate the form
-    #
-    # p. s. it kind of sucks that I must provide a dictionary here and lose
-    # type-checking
-    form = SubscribeForm(
-        {
+    user_subs = Subscription.objects.filter(user=request.user).first()
+    if user_subs is not None:
+        # p. s. it kind of sucks that I must provide a dictionary here and lose
+        # type-checking
+        form_data = {
             "to_new_posts": user_subs.to_new_posts,
             "to_engaged_posts": user_subs.to_engaged_posts,
         }
-    )
+    else:
+        form_data = {}
+
+    # pre-populate the form
+    form = SubscribeForm(form_data)
 
     return render(
         request,

@@ -1,6 +1,9 @@
 from django import forms
 
 
+# TODO: look into ModelForm?
+#
+# And ideally typed using django-stubs
 class SubscribeForm(forms.Form):
     to_new_posts = forms.BooleanField(
         label="Subscribe to new posts", required=False
