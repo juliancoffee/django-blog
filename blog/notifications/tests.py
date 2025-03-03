@@ -166,8 +166,8 @@ class IntegrationTests(TestCase):
         response = self.client.get(settings_url)
         self.assertEqual(response.status_code, 200)
         form = response.context["form"]
-        self.assertFalse(form.initial.get("to_new_posts"))
-        self.assertFalse(form.initial.get("to_engaged_posts"))
+        self.assertFalse(form.data["to_new_posts"])
+        self.assertFalse(form.data["to_engaged_posts"])
 
         # Update preferences
         response = self.client.post(
@@ -178,5 +178,5 @@ class IntegrationTests(TestCase):
         # Visit again - form should now show checked values
         response = self.client.get(settings_url)
         form = response.context["form"]
-        self.assertTrue(form.initial["to_new_posts"])
-        self.assertTrue(form.initial["to_engaged_posts"])
+        self.assertTrue(form.data["to_new_posts"])
+        self.assertTrue(form.data["to_engaged_posts"])
