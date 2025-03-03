@@ -11,6 +11,4 @@ class Subscription(models.Model):
     to_engaged_posts = models.BooleanField(default=False)
 
     def __str__(self):
-        # I wish there was a way to autogenerate it, it's so stupid
-        # TODO: Can I use dataclasses here?
-        return f"{self.to_new_posts=}:{self.to_engaged_posts=}"
+        return f"For {self.user.username}"
