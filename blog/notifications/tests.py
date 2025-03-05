@@ -141,6 +141,27 @@ class NotificationViewsTests(TestCase):
         _ = self.client.get(self.settings_url)
         self.assertEqual(Subscription.objects.count(), 1)
 
+    def test_subscription_cascade_deletion(self):
+        """Test that subscriptions are deleted when the associated user is deleted"""
+        # Create a user and subscription
+        user = User.objects.create_user(
+            username="tempuser", password="temppass"
+        )
+        subscription = Subscription.objects.create(
+            user=user, to_new_posts=True, to_engaged_posts=True
+        )
+
+        # Verify subscription exists
+        self.assertEqual(Subscription.objects.filter(user=user).count(), 1)
+
+        # Delete the user
+        user.delete()
+
+        # Verify the subscription was also deleted
+        self.assertEqual(
+            Subscription.objects.filter(id=subscription.id).count(), 0
+        )
+
 
 class IntegrationTests(TestCase):
     def setUp(self):
@@ -160,14 +181,14 @@ class IntegrationTests(TestCase):
         4. Verifies changes when revisiting the page
         """
         # p. s.
-        # originally this code didn't work, because we had smth like
-        # form["to_new_posts"].initial
+        # Testing forms in Django is kind of annoying.
+        # - If you have ModelForm, you need to use `form.instance.<field>`
+        # - If it's a regular Form, you need to use `form.data["<field>"]`
         #
-        # I changed it to form.data["to_new_posts"]
+        # I like Django forms less and less.
         #
-        # and now we're using ModelForm, and form.data simply doesn't exist
-        #
-        # god I hate Django forms, they are absolutely the worst
+        # p. p. s. coderabbitai made my change my comments, because previous
+        # ones were "considered unprofessional"
 
         self.client.login(username="testuser", password="testpassword")
         settings_url = reverse("blog:notifications:settings")

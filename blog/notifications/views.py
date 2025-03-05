@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 def handle_settings_update(request: HttpRequest) -> HttpResponse:
     # this page requires auth, plus we're using LoginRequiredMiddleware
+    # NOTE: `assert` here is mainly for `mypy`
     assert request.user.is_authenticated
 
     form = SubscribeForm(request.POST)
@@ -30,11 +31,9 @@ def handle_settings_update(request: HttpRequest) -> HttpResponse:
     user_subs = Subscription.objects.get_or_create(user=request.user)[0]
     user_subs.to_new_posts = form.cleaned_data["to_new_posts"]
     user_subs.to_engaged_posts = form.cleaned_data["to_engaged_posts"]
-    # don't forget to save
-    # don't forget to save
-    # don't forget to save
+    # imagine if there was a context-manager that automatically calls save() ...
     #
-    # urgh
+    # dreams, sweat dreams
     user_subs.save()
 
     return HttpResponseRedirect(reverse("blog:notifications:settings"))
@@ -42,6 +41,7 @@ def handle_settings_update(request: HttpRequest) -> HttpResponse:
 
 def settings_page(request: HttpRequest) -> HttpResponse:
     # this page requires auth, plus we're using LoginRequiredMiddleware
+    # NOTE: `assert` here is mainly for `mypy`
     assert request.user.is_authenticated
 
     # pre-populate the form
@@ -65,4 +65,6 @@ def settings(request: HttpRequest) -> HttpResponse:
     elif request.method == "POST":
         return handle_settings_update(request)
     else:
+        # yes, this is unreachable for now, but I'd like to get an error here
+        # if this code changes in some unpredicable way
         raise RuntimeError(f"unreachable, {request.method=}")
