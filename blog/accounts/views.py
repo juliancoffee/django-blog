@@ -15,6 +15,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic.edit import FormView
 
+from .forms import UpdateEmailForm
+
 logger = logging.getLogger(__name__)
 
 
@@ -105,4 +107,31 @@ class SignUpView(FormView):
 
 
 def profile(request: HttpRequest) -> HttpResponse:
-    return render(request, "blog/profile.html")
+    email_form = UpdateEmailForm()
+    return render(request, "blog/profile.html", {"email_form": email_form})
+
+
+@require_POST
+def update_email(request: HttpRequest) -> HttpResponse:
+    # assert mainly to convince `mypy`, but also as a safety net
+    # we're using LoginNotRequiredMiddleware anyway
+    assert request.user.is_authenticated
+
+    form = UpdateEmailForm(request.POST)
+    if not form.is_valid():
+        return render(
+            request,
+            "blog/email_form_fragment.html",
+            {
+                "email_form": form,
+            },
+        )
+    user = request.user
+    # NOTE: ideally we'd send confirmation email here, but it's ... fine for now
+    # It's not an outright security vulnerability, probably.
+    user.email = form.cleaned_data["email"]
+    user.save()
+
+    response = HttpResponse()
+    response.headers["HX-Redirect"] = reverse("blog:accounts:profile")
+    return response

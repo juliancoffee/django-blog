@@ -1,4 +1,5 @@
 {% extends "./base.html" %}
+{% load admin_urls %}
 
 {% block content %}
 <ul>
@@ -7,19 +8,30 @@
     <li>Meowing since: {{ user.date_joined }}</li>
 </ul>
 <ul>
-    <!-- TOOO: add a way to enter these -->
+    <!-- TODO: add a way to enter these -->
     <!-- not like anyone will see it though -->
 
     <!-- maybe email is sort of important for notifications and stuff? -->
     <li>First Name: {{ user.first_name }}</li>
     <li>Last Name: {{ user.last_name }}</li>
     <li>Email: {{ user.email }}</li>
+    {% if user.email %}
+    <li>
+        <a href="{% url 'blog:notifications:settings' %}">
+            Manage notifications
+        </a>
+    </li>
+    {% else %}
+    <li>
+        Enter email to manage notifications
+        {% include "./email_form_fragment.html" %}
+    </li>
+    {% endif %}
 </ul>
 <ul>
     <li>Super User: {{ user.is_superuser }}</li>
     {% if user.is_staff %}
-    {% comment %} for some reason I can't use reverse url here {% endcomment %}
-    <li>Staff: <a href="/admin">
+    <li>Staff: <a href="{% url 'admin:index' %}">
             Yes, go to the admin page
         </a>
     </li>

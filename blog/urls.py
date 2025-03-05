@@ -18,6 +18,8 @@ urlpatterns = [
     ),
     # auth
     path("accounts/", include("blog.accounts.urls")),
+    # notifications
+    path("notifications/", include("blog.notifications.urls")),
     # export/import
     path("data_management/", blog.export.views.export_page, name="export_page"),
     path("export-file/", blog.export.views.export_datafile, name="export_file"),

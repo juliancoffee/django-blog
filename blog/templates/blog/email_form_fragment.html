@@ -1,0 +1,16 @@
+{# for use with htmx, not a full document #}
+<div id="email-form">
+    {% if email_form.errors %}
+        {{ email_form.errors }}
+    {% endif %}
+    <form
+        hx-post="{% url 'blog:accounts:update_email' %}"
+        hx-target="#email-form"
+    >
+        {% csrf_token %}
+
+        {{ email_form }}
+
+        <input type="submit" value="Update your email">
+    </form>
+</div>

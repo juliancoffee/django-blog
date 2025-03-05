@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     # ours
     "blog.accounts",
     "blog.export",
+    "blog.notifications",
     "blog",
     # django contrib
     "django.contrib.admin",
