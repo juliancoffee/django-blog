@@ -19,7 +19,7 @@ echo "<> running the server"
 
 export DEBUG=1
 # I want to have DEVMODE separate from DEBUG in cases when I need to reproduce
-# something in release version, and they might be slightly separate
+# something in release version, and they might be slightly different
 export DEVMODE=1
 
 #export CONSOLE_LOG_LEVEL=INFO # default is DEBUG
@@ -34,7 +34,7 @@ echo "" > debug.log
 
 # NOTE: use `exec` here to seize control, helps if you wanna Ctrl+C
 #
-# runserver has hot-reload, so that's what we use
+# runserver has a better hot-reload, so that's what we use
 exec python manage.py runserver 0.0.0.0:8000
 #exec gunicorn mysite.wsgi \
     #--bind 0.0.0.0:8000 \

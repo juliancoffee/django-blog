@@ -1,6 +1,5 @@
 from django.urls import include, path, re_path
 
-import blog.debug.views
 import blog.export.views
 import blog.views
 
@@ -30,5 +29,5 @@ urlpatterns = [
         name="import_preview",
     ),
     # misc
-    path("debug_view/", blog.debug.views.debug_view, name="debug_view"),
+    path("devmode/", include("blog.devmode.urls")),
 ]

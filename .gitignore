@@ -3,6 +3,7 @@ __pycache__
 
 # django
 db.sqlite3
+debug.log
 
 # files that are explicitly hidden
 .env
