@@ -1,16 +1,21 @@
 import os
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_not_required
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import AnonymousUser, User
 from django.http import (
     HttpResponse,
 )
 from django.shortcuts import render
 
 
-# TODO: require admin perms
-@login_not_required
-def debug_view(request) -> HttpResponse:
+# FIXME: copied from datamanagement app
+def user_is_staff_check(user: User | AnonymousUser) -> bool:
+    return user.is_staff
+
+
+@user_passes_test(user_is_staff_check)
+def spylog(request) -> HttpResponse:
     # NOTE: idk where we should block requests here or in urlconfig?
     #
     # but it's not like this whole view follows any kind of best practices,
