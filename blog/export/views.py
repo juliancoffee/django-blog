@@ -6,13 +6,13 @@ from datetime import datetime
 from typing import Optional, TypedDict
 
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import AnonymousUser, User
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 
 from blog.models import Post
+from blog.utils import user_is_staff_check
 
 from .forms import ExportDataForm, ImportDataForm
 
@@ -83,20 +83,6 @@ def get_all_data() -> ExportData:
         "posts": get_post_data(),
         "users": get_user_data(),
     }
-
-
-# We know that all users are authorized, because of LoginRequiredMiddleware
-#
-# I'm not sure I like the fact that it is so implicit and can't be inferred
-# from the function body, but whatever.
-#
-# Also I don't like that fact that our authentication check is automatic,
-# but our authorization check can be ignored.
-#
-# Of course, you can't automate authorization, but can't we at least have
-# some catch-all check that forbids every request, unless configured?
-def user_is_staff_check(user: User | AnonymousUser) -> bool:
-    return user.is_staff
 
 
 # Create your views here.
