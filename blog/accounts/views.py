@@ -123,7 +123,7 @@ def update_email(request: HttpRequest) -> HttpResponse:
             request,
             "blog/email_form_fragment.html",
             {
-                "email_form": form,
+                "form": form,
             },
         )
     user = request.user
