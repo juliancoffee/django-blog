@@ -29,6 +29,7 @@ And related things such as:
 - CI via Github Actions workflows
 - deployment (via render.com for now)
 - SMTP
+- PostgreSQL backups using pg_dump
 
 # run
 There are two main options
