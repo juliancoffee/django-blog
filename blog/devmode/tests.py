@@ -19,7 +19,8 @@ User = get_user_model()
 #
 # I think that's because we are running into some sort of datarace by patching
 # globals :(
-SAMPLE_LOG="This is a sample log\nWith multiple lines\nFor testing purposes"
+SAMPLE_LOG = "This is a sample log\nWith multiple lines\nFor testing purposes"
+
 
 class DevModeViewTests(TestCase):
     """Tests for the devmode app views"""
@@ -43,11 +44,6 @@ class DevModeViewTests(TestCase):
 
         # URL for the spylog view
         self.spylog_url = reverse("blog:devmode:spylog")
-
-        # Sample log content
-        self.sample_log_content = (
-            "This is a sample log\nWith multiple lines\nFor testing purposes"
-        )
 
     def test_url_exists_at_desired_location(self):
         """Test that the URL exists at the expected location"""
@@ -75,14 +71,14 @@ class DevModeViewTests(TestCase):
         self.client.force_login(self.regular_user)
         with patch.dict(os.environ, {"DEVMODE": "1"}):
             response = self.client.get(self.spylog_url)
-            # Should redirect to login page
+            # Should fail
             self.assertNotEqual(response.status_code, 200)
 
     def test_anonymous_user_cannot_access(self):
         """Test that anonymous users cannot access the view"""
         with patch.dict(os.environ, {"DEVMODE": "1"}):
             response = self.client.get(self.spylog_url)
-            # Should redirect to login page
+            # Should fail
             self.assertNotEqual(response.status_code, 200)
 
     def test_devmode_required(self):
@@ -116,9 +112,11 @@ class DevModeViewTests(TestCase):
     def test_file_not_found_error(self):
         """Test handling when debug log file is not found"""
         self.client.force_login(self.staff_user)
-        with patch.dict(os.environ, {"DEVMODE": "1"}):
-            with self.assertRaises(FileNotFoundError):
-                self.client.get(self.spylog_url)
+        with (
+            patch.dict(os.environ, {"DEVMODE": "1"}),
+            self.assertRaises(FileNotFoundError),
+        ):
+            self.client.get(self.spylog_url)
 
     @patch(
         "builtins.open",
