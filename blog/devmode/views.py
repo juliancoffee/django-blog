@@ -2,16 +2,12 @@ import os
 
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import AnonymousUser, User
 from django.http import (
     HttpResponse,
 )
 from django.shortcuts import render
 
-
-# FIXME: copied from datamanagement app
-def user_is_staff_check(user: User | AnonymousUser) -> bool:
-    return user.is_staff
+from blog.utils import user_is_staff_check
 
 
 @user_passes_test(user_is_staff_check)
