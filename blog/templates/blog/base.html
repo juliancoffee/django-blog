@@ -37,7 +37,7 @@
         <span>
             Made with Django &copy juliancoffee 2024
             {% if dev_mode %}
-                <a href="{% url 'blog:debug_view' %}"> 👀 </a>
+                <a href="{% url 'blog:devmode:spylog' %}"> 👀 </a>
             {% endif %}
         </span>
     </footer>
