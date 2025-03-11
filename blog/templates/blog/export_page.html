@@ -16,12 +16,12 @@
         {{ import_form }}
 
         <button
-            hx-post="{% url 'blog:management:import_preview' %}"
+            hx-post="{% url 'blog:management:handle_import_preview' %}"
             hx-target="#import-preview"
         >Wait, show the preview</button>
 
         <button
-            hx-post="{% url 'blog:management:import' %}"
+            hx-post="{% url 'blog:management:handle_import' %}"
             hx-target="#import-results"
             hx-confirm="
             Are you sure you wish to import the data?
@@ -34,7 +34,7 @@
     <h1> Export Data </h1>
     <form
         class="list-form"
-        action="{% url 'blog:management:export_file' %}"
+        action="{% url 'blog:management:download_exported_file' %}"
         method=GET
     >
         {{ export_form }}

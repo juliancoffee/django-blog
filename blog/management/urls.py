@@ -5,13 +5,18 @@ from . import views
 app_name = "management"
 urlpatterns = [
     # export/import
-    # TODO: make urls and names consistent
-    path("data/", views.data_console, name="data-console"),
-    path("export-file/", views.export_datafile, name="export_file"),
-    path("import/", views.import_data, name="import"),
+    path("data/", views.data_console, name="data_console"),
+    # export
+    path(
+        "export-file/",
+        views.download_exported_file,
+        name="download_exported_file",
+    ),
+    # import
+    path("import/", views.handle_import, name="handle_import"),
     path(
         "import-preview/",
-        views.import_preview,
-        name="import_preview",
+        views.handle_import_preview,
+        name="handle_import_preview",
     ),
 ]

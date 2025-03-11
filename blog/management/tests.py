@@ -94,8 +94,9 @@ class DataExportTests(TestCase):
 
     def test_export_endpoint(self):
         """Test the export endpoint returns a json file with correct content"""
-        response = self.client.post(
-            reverse("blog:management:export_file"), {"download": True}
+        response = self.client.get(
+            reverse("blog:management:download_exported_file"),
+            {"download": True},
         )
 
         self.assertEqual(response.status_code, 200)
@@ -123,8 +124,9 @@ class DataExportTests(TestCase):
         self.assertEqual(len(all_data["posts"]), 0)
 
         # Test export endpoint with empty database
-        response = self.client.post(
-            reverse("blog:management:export_file"), {"download": True}
+        response = self.client.get(
+            reverse("blog:management:download_exported_file"),
+            {"download": True},
         )
 
         # mypy can't figure out it's a FileResponse
@@ -240,7 +242,7 @@ class DataImportTests(TestCase):
         # Create and upload import file
         import_file = self.create_test_file()
         response = self.client.post(
-            reverse("blog:management:import"), {"data_file": import_file}
+            reverse("blog:management:handle_import"), {"data_file": import_file}
         )
 
         # Verify successful import
@@ -279,7 +281,7 @@ class DataImportTests(TestCase):
         # Create and upload import file
         import_file = self.create_test_file()
         response = self.client.post(
-            reverse("blog:management:import"), {"data_file": import_file}
+            reverse("blog:management:handle_import"), {"data_file": import_file}
         )
 
         # Verify successful import
@@ -305,7 +307,7 @@ class DataImportTests(TestCase):
 
         # Post to import preview endpoint
         response = self.client.post(
-            reverse("blog:management:import_preview"),
+            reverse("blog:management:handle_import_preview"),
             {"data_file": import_file},
         )
 
@@ -325,7 +327,8 @@ class DataImportTests(TestCase):
 
         # Try to import invalid file
         response = self.client.post(
-            reverse("blog:management:import"), {"data_file": invalid_file}
+            reverse("blog:management:handle_import"),
+            {"data_file": invalid_file},
         )
 
         # Because we're using HTMX we want to return 200 pretty much always
@@ -339,7 +342,7 @@ class DataImportTests(TestCase):
         # Create and upload import file
         import_file = self.create_test_file()
         self.client.post(
-            reverse("blog:management:import"), {"data_file": import_file}
+            reverse("blog:management:handle_import"), {"data_file": import_file}
         )
 
         # Verify all comments have valid post references
@@ -414,7 +417,7 @@ class DataImportTests(TestCase):
 
         # Try to import the malformed data
         self.client.post(
-            reverse("blog:management:import"), {"data_file": import_file}
+            reverse("blog:management:handle_import"), {"data_file": import_file}
         )
 
         # Verify database state is unchanged
