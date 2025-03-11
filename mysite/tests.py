@@ -99,7 +99,7 @@ class CanaryTest(TestCase):
     """
     The purpose of this test is to test all routes
 
-    It is easier said than done, of course, which in hindsight, I haven't
+    It is easier said than done, of course, which in hindsight, I should have
     realised when I started this beautifully foolish endeavor.
 
     But still, a lot of views actually don't take any arguments.
@@ -118,6 +118,7 @@ class CanaryTest(TestCase):
     If a function uses named url parameters, it should use @test_with decorator.
     Check its docs to learn more.
     """
+
     def setUp(self):
         # Create a staff user
         self.staff_user = User.objects.create_user(
@@ -127,6 +128,22 @@ class CanaryTest(TestCase):
         # Create a regular user for comparison
         self.regular_user = User.objects.create_user(
             username="regularuser", password="testpassword", is_staff=False
+        )
+
+    def assertLoads(self, url, args=None):
+        args = args or []
+        response = self.client.get(reverse(url, args=args))
+
+        OK = 200
+        REDIRECT = 302
+        WRONG_METHOD = 405
+        FORBIDDEN = 403
+        NOT_FOUND = 404
+
+        self.assertIn(
+            response.status_code,
+            [OK, REDIRECT, WRONG_METHOD, FORBIDDEN, NOT_FOUND],
+            f"URL {url} returned status code {response.status_code}",
         )
 
     def try_all_patterns(self):
@@ -141,10 +158,9 @@ class CanaryTest(TestCase):
                     picks = view.test_provider()
                     for pick in picks:
                         with self.subTest(args=pick):
-                            # TODO: ignores status code, do we want that?
-                            self.client.get(reverse(url, args=pick))
+                            self.assertLoads(url, args=pick)
                 else:
-                    self.client.get(reverse(url))
+                    self.assertLoads(url)
 
     @tag("canary")
     def test_canary_anon(self):
