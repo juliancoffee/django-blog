@@ -19,7 +19,7 @@ urlpatterns = [
     # notifications
     path("notifications/", include("blog.notifications.urls")),
     # export/import
-    path("management/", include("blog.export.urls")),
+    path("management/", include("blog.management.urls")),
     # misc
     path("devmode/", include("blog.devmode.urls")),
 ]
