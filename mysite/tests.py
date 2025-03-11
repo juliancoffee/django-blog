@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
+from unittest import TestCase as SimpleTestCase
 
 from django.contrib.auth.models import User
 from django.test import TestCase, tag
@@ -76,8 +77,6 @@ def flatten_forest(forest: list[PatternTree]) -> list[RouteData]:
         # As mentioned in type description, the only difference from the
         # construction of the tree is that while you traverse the tree, you need
         # to accumuate nested namespaces.
-        #
-        # I wish I knew how to test it :thinking:
         for node in forest:
             match node:
                 case URLPattern() as p:
@@ -175,3 +174,41 @@ class CanaryTest(TestCase):
     def test_canary_staff(self):
         self.client.force_login(self.staff_user)
         self.try_all_patterns()
+
+
+class TestForest(SimpleTestCase):
+    @tag("selftest")
+    def test_flatten_forest(self):
+        # Create a mock pattern tree
+        dummy: Any = None
+        mock_pattern1 = URLPattern(
+            pattern=dummy, callback=dummy, name="pattern1"
+        )
+        mock_pattern2 = URLPattern(
+            pattern=dummy, callback=dummy, name="pattern2"
+        )
+        mock_pattern3 = URLPattern(
+            pattern=dummy, callback=dummy, name="pattern3"
+        )
+
+        forest: list[PatternTree] = [
+            mock_pattern1,
+            (
+                "namespace1",
+                [
+                    mock_pattern2,
+                    ("namespace2", [mock_pattern3]),
+                ],
+            ),
+        ]
+
+        result = flatten_forest(forest)
+
+        # Verify expected output
+        expected = [
+            ("pattern1", mock_pattern1),
+            ("namespace1:pattern2", mock_pattern2),
+            ("namespace1:namespace2:pattern3", mock_pattern3),
+        ]
+
+        self.assertEqual(expected, result)
