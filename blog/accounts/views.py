@@ -70,18 +70,16 @@ def instant_logout(request: HttpRequest) -> HttpResponse:
 # NOTE:
 # We use method decorator on "dispatch" because that's an entry point.
 #
-# sort of
+# << source code explanation >>
+# Judging by the code, as_view() copies attributes from `dispatch` method
+# to the resulting callable.
+# On of such attributes is "login_required" which can be True or False, which
+# is then checked by LoginRequiredMiddleware, if such exists, of course.
+# login_not_required() decorator sets this attribute to False, but by default
+# LoginRequireMiddleware
+# << end of source code explanation >>
 #
-# I just realized that I'm not sure how exactly LoginRequired middleware checks
-# which requests to allow and which to discard.
-#
-# Although if I remember it correctly from looking at Django's source code and
-# `as_view()` method in general, it copies attributes from dispatch method to
-# the returned view function.
-# So I guess that is the reason why we put the decorator on dispatch.
-#
-# But I don't think I'll *understand* the behaviour until I'll write my own
-# middleware.
+# That's a neat hack, I must say.
 @method_decorator(login_not_required, name="dispatch")
 class SignUpView(FormView):
     template_name = "blog/signup.html"
