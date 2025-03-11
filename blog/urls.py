@@ -1,6 +1,5 @@
 from django.urls import include, path, re_path
 
-import blog.export.views
 import blog.views
 
 app_name = "blog"
@@ -20,14 +19,7 @@ urlpatterns = [
     # notifications
     path("notifications/", include("blog.notifications.urls")),
     # export/import
-    path("data_management/", blog.export.views.export_page, name="export_page"),
-    path("export-file/", blog.export.views.export_datafile, name="export_file"),
-    path("import/", blog.export.views.import_data, name="import"),
-    path(
-        "import_preview/",
-        blog.export.views.import_preview,
-        name="import_preview",
-    ),
+    path("management/", include("blog.export.urls")),
     # misc
     path("devmode/", include("blog.devmode.urls")),
 ]

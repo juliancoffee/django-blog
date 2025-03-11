@@ -87,7 +87,7 @@ def get_all_data() -> ExportData:
 
 # Create your views here.
 @user_passes_test(user_is_staff_check)
-def export_page(request: HttpRequest) -> HttpResponse:
+def data_console(request: HttpRequest) -> HttpResponse:
     import_form = ImportDataForm()
     export_form = ExportDataForm()
     return render(
