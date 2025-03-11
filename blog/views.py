@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
-from blog.utils import get_user_ip
+from blog.utils import get_user_ip, test_with
 
 from .forms import CommentForm
 from .models import Post
@@ -38,7 +38,15 @@ def index(request) -> HttpResponse:
     return render(request, "blog/index.html", context)
 
 
+def random_post_ids() -> list[tuple[int]]:
+    # NOTE: it's must be a tuple
+    # TODO: don't hardcode, fetch them from DB
+    random_post_id = (22,)
+    return [random_post_id]
+
+
 @login_not_required
+@test_with(random_post_ids)
 def detail(request, post_id: int) -> HttpResponse:
     # TODO: this is premature optimization
     #
@@ -75,6 +83,7 @@ def detail(request, post_id: int) -> HttpResponse:
 
 
 @method_decorator(login_not_required, name="dispatch")
+@method_decorator(test_with(random_post_ids), name="dispatch")
 class CommentView(FormView):
     template_name = "blog/detail.html"
     form_class = CommentForm

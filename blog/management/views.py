@@ -5,6 +5,7 @@ import logging
 from django.contrib.auth.decorators import user_passes_test
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 
 from blog.utils import user_is_staff_check
 
@@ -63,6 +64,7 @@ def export_datafile(request: HttpRequest) -> HttpResponse | FileResponse:
 
 
 @user_passes_test(user_is_staff_check)
+@require_POST
 def import_preview(request: HttpRequest) -> HttpResponse:
     data = parse_import_data(request)
     return render(request, "blog/import_preview_fragment.html", {"data": data})
