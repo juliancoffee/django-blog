@@ -41,7 +41,26 @@ def format_date(d: datetime) -> str:
 
 def get_post_data() -> list[PostData]:
     res = []
-    for post in Post.objects.all():
+    # NOTE: ok, we're using prefetch_related here, because select_related only
+    # works for foreign keys on object you're fetching.
+    #
+    # Comment isn't a foreign key on Post, it is the other way around.
+    #
+    # So from my understanding, prefetch_related does two things for us.
+    #
+    # - Fetch all Post's
+    # - Fetch all Comment's where post_id in <all posts>
+    # Get the result of two queries and cache it in QuerySet.
+    #
+    # The alternative would be to fetch comment_set for each post in a new
+    # query, which is not ideal.
+    #
+    # NOTE: you need to call it with "comment_set", because that's what you'll
+    # use in the end.
+    # Not just "comment"
+    for post in (
+        Post.objects.all().order_by("pub_date").prefetch_related("comment_set")
+    ):
         post_data: PostData = {
             "post_text": post.post_text,
             "pub_date": format_date(post.pub_date),
@@ -58,7 +77,7 @@ def get_post_data() -> list[PostData]:
         }
         res.append(post_data)
 
-    return sorted(res, key=lambda p: datetime.fromisoformat(p["pub_date"]))
+    return res
 
 
 def get_user_data() -> list[UserData]:
