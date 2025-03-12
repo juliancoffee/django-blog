@@ -179,7 +179,7 @@ class DataImportTests(TestCase):
             "users": [],
         }
 
-    def create_test_file(self, data=None):
+    def create_test_file(self, data=None) -> SimpleUploadedFile:
         """Helper method to create a test JSON file for import"""
         if data is None:
             data = self.sample_data
@@ -330,6 +330,8 @@ class DataImportTests(TestCase):
             reverse("blog:management:handle_import"),
             {"data_file": invalid_file},
         )
+        # NOTE: all this test does is tests what we return 200 no matter what
+        # TODO: write a useful test that tests individual functions?
 
         # Because we're using HTMX we want to return 200 pretty much always
         self.assertEqual(response.status_code, 200)
@@ -417,8 +419,11 @@ class DataImportTests(TestCase):
 
         # Try to import the malformed data
         self.client.post(
-            reverse("blog:management:handle_import"), {"data_file": import_file}
+            reverse("blog:management:handle_import"),
+            {"data_file": import_file},
         )
+        # NOTE: all this test does is tests what we return 200 no matter what
+        # TODO: write a useful test that tests individual functions?
 
         # Verify database state is unchanged
         self.assertEqual(

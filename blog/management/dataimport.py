@@ -64,14 +64,12 @@ def parse_import_data(request: HttpRequest) -> Data:
         raise RuntimeError(f"form is invalid, {form.errors.get_json_data()}")
 
     data_file = request.FILES["data_file"]
-    # WHY DJANGO, WHY?
+    # Ok, I hope that I won't ever pass multiple files here.
+    # If I do, let it crash
+    #
+    # And no, I won't run my code with `python -O`.
+    # I hope...
     assert isinstance(data_file, UploadedFile)
-
-    if data_file.content_type != "application/json":
-        # TODO: make HTMX work with this
-        raise RuntimeError(
-            f"expected application/json, got {data_file.content_type}"
-        )
 
     raw_data = data_file.read()
     json_data: ExportData = json.loads(raw_data)
