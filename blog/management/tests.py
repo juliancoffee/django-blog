@@ -4,11 +4,13 @@
 # Is it wise? idk, we'll see.
 # It works though.
 import json
+import logging
 from datetime import UTC, datetime
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.test.client import RequestFactory
 from django.urls import reverse
 
 from blog.models import Comment, Post
@@ -16,7 +18,64 @@ from blog.models import Comment, Post
 from .dataexport import CommentData as ExportDataComment
 from .dataexport import PostData as ExportPostData
 from .dataexport import format_date, get_all_data, get_post_data
-from .dataimport import convert_comment, convert_post
+from .dataimport import (
+    convert_comment,
+    convert_post,
+    load_all_data_in,
+    parse_import_data,
+)
+
+# It still doesn't work half of the time
+logging.disable()
+
+SAMPLE_DATA = {
+    "posts": [
+        {
+            "post_text": "Imported Post 1",
+            "pub_date": "2023-02-01T10:00:00+00:00",
+            "comments": [
+                {
+                    "comment_text": "Imported Comment 1",
+                    "pub_date": "2023-02-01T10:30:00+00:00",
+                    "username": None,
+                    "ip": "192.168.1.1",
+                },
+                {
+                    "comment_text": "Imported Comment 2",
+                    "pub_date": "2023-02-01T11:00:00+00:00",
+                    "username": None,
+                    "ip": "192.168.1.2",
+                },
+            ],
+        },
+        {
+            "post_text": "Imported Post 2",
+            "pub_date": "2023-02-02T10:00:00+00:00",
+            "comments": [
+                {
+                    "comment_text": "Imported Comment 3",
+                    "pub_date": "2023-02-02T10:30:00+00:00",
+                    "username": None,
+                    "ip": "192.168.1.3",
+                }
+            ],
+        },
+    ],
+    "users": [],
+}
+
+
+def create_test_file(data=None) -> SimpleUploadedFile:
+    """Helper method to create a test JSON file for import"""
+    if data is None:
+        data = SAMPLE_DATA
+
+    json_data = json.dumps(data)
+    return SimpleUploadedFile(
+        "test_import.json",
+        json_data.encode("utf-8"),
+        content_type="application/json",
+    )
 
 
 class DataExportTests(TestCase):
@@ -142,97 +201,6 @@ class DataImportTests(TestCase):
         )
         self.client.force_login(self.staff_user)
 
-        # Sample export data for testing import
-        self.sample_data = {
-            "posts": [
-                {
-                    "post_text": "Imported Post 1",
-                    "pub_date": "2023-02-01T10:00:00+00:00",
-                    "comments": [
-                        {
-                            "comment_text": "Imported Comment 1",
-                            "pub_date": "2023-02-01T10:30:00+00:00",
-                            "username": None,
-                            "ip": "192.168.1.1",
-                        },
-                        {
-                            "comment_text": "Imported Comment 2",
-                            "pub_date": "2023-02-01T11:00:00+00:00",
-                            "username": None,
-                            "ip": "192.168.1.2",
-                        },
-                    ],
-                },
-                {
-                    "post_text": "Imported Post 2",
-                    "pub_date": "2023-02-02T10:00:00+00:00",
-                    "comments": [
-                        {
-                            "comment_text": "Imported Comment 3",
-                            "pub_date": "2023-02-02T10:30:00+00:00",
-                            "username": None,
-                            "ip": "192.168.1.3",
-                        }
-                    ],
-                },
-            ],
-            "users": [],
-        }
-
-    def create_test_file(self, data=None) -> SimpleUploadedFile:
-        """Helper method to create a test JSON file for import"""
-        if data is None:
-            data = self.sample_data
-
-        json_data = json.dumps(data)
-        return SimpleUploadedFile(
-            "test_import.json",
-            json_data.encode("utf-8"),
-            content_type="application/json",
-        )
-
-    def test_convert_comment(self):
-        """Test convert_comment correctly parses JSON comment data"""
-        json_comment: ExportDataComment = {
-            "comment_text": "Test Comment",
-            "pub_date": "2023-01-01T12:00:00+00:00",
-            "username": None,
-            "ip": "127.0.0.1",
-        }
-
-        comment = convert_comment(json_comment)
-
-        self.assertEqual(comment.comment_text, "Test Comment")
-        self.assertEqual(
-            comment.pub_date,
-            datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC),
-        )
-        self.assertEqual(comment.ip, "127.0.0.1")
-
-    def test_convert_post(self):
-        """Test convert_post correctly parses JSON post data"""
-        json_post: ExportPostData = {
-            "post_text": "Test Post",
-            "pub_date": "2023-01-01T12:00:00+00:00",
-            "comments": [
-                {
-                    "comment_text": "Test Comment",
-                    "pub_date": "2023-01-01T12:30:00+00:00",
-                    "username": None,
-                    "ip": "127.0.0.1",
-                }
-            ],
-        }
-
-        post = convert_post(json_post)
-
-        self.assertEqual(post.post_text, "Test Post")
-        self.assertEqual(
-            post.pub_date, datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
-        )
-        self.assertEqual(len(post.comments), 1)
-        self.assertEqual(post.comments[0].comment_text, "Test Comment")
-
     def test_import_with_empty_database(self):
         """Test importing posts into an empty database"""
         # Verify database is empty
@@ -240,7 +208,7 @@ class DataImportTests(TestCase):
         self.assertEqual(Comment.objects.count(), 0)
 
         # Create and upload import file
-        import_file = self.create_test_file()
+        import_file = create_test_file()
         response = self.client.post(
             reverse("blog:management:handle_import"), {"data_file": import_file}
         )
@@ -279,7 +247,7 @@ class DataImportTests(TestCase):
         self.assertEqual(Comment.objects.count(), 1)
 
         # Create and upload import file
-        import_file = self.create_test_file()
+        import_file = create_test_file()
         response = self.client.post(
             reverse("blog:management:handle_import"), {"data_file": import_file}
         )
@@ -303,7 +271,7 @@ class DataImportTests(TestCase):
     def test_import_preview_endpoint(self):
         """Test the import preview endpoint"""
         # Prepare import request with file
-        import_file = self.create_test_file()
+        import_file = create_test_file()
 
         # Post to import preview endpoint
         response = self.client.post(
@@ -331,7 +299,6 @@ class DataImportTests(TestCase):
             {"data_file": invalid_file},
         )
         # NOTE: all this test does is tests what we return 200 no matter what
-        # TODO: write a useful test that tests individual functions?
 
         # Because we're using HTMX we want to return 200 pretty much always
         self.assertEqual(response.status_code, 200)
@@ -342,7 +309,7 @@ class DataImportTests(TestCase):
     def test_import_preserves_data_integrity(self):
         """Test that import maintains referential integrity"""
         # Create and upload import file
-        import_file = self.create_test_file()
+        import_file = create_test_file()
         self.client.post(
             reverse("blog:management:handle_import"), {"data_file": import_file}
         )
@@ -357,6 +324,32 @@ class DataImportTests(TestCase):
         comments = post.comment_set.all().order_by("pub_date")
         self.assertEqual(comments[0].comment_text, "Imported Comment 1")
         self.assertEqual(comments[1].comment_text, "Imported Comment 2")
+
+
+class DataImportUnitTest(TestCase):
+    def setUp(self):
+        # Create a staff user for testing
+        self.staff_user = User.objects.create_user(
+            username="staffuser", password="testpassword", is_staff=True
+        )
+        self.client.force_login(self.staff_user)
+
+    def test_import_invalid_form_format(self):
+        """Test that parsed_import_data rejects malformed requests"""
+        # Create a non-JSON file
+        invalid_file = SimpleUploadedFile(
+            "test.txt", b"This is not JSON", content_type="text/plain"
+        )
+
+        rf = RequestFactory()
+        request = rf.post(
+            "/whatever/",
+            {"data_file": invalid_file},
+        )
+
+        # TODO: grab an error code instead
+        with self.assertRaises(RuntimeError):
+            parse_import_data(request)
 
     def test_import_transaction_atomicity(self):
         """Test that imports are atomic - either all succeeds or nothing changes"""
@@ -415,15 +408,18 @@ class DataImportTests(TestCase):
         }
 
         # Create the test file with malformed data
-        import_file = self.create_test_file(malformed_data)
+        import_file = create_test_file(malformed_data)
 
         # Try to import the malformed data
-        self.client.post(
-            reverse("blog:management:handle_import"),
+        rf = RequestFactory()
+        request = rf.post(
+            "/whatever/",
             {"data_file": import_file},
         )
-        # NOTE: all this test does is tests what we return 200 no matter what
-        # TODO: write a useful test that tests individual functions?
+
+        # TODO: come with something better
+        with self.assertRaises(KeyError):
+            load_all_data_in(request)
 
         # Verify database state is unchanged
         self.assertEqual(
@@ -446,3 +442,47 @@ class DataImportTests(TestCase):
             Post.objects.filter(post_text="Valid Post 2").exists(),
             "Valid Post 2 should not exist after a failed transaction",
         )
+
+
+class ConvertorsTest(TestCase):
+    def test_convert_comment(self):
+        """Test convert_comment correctly parses JSON comment data"""
+        json_comment: ExportDataComment = {
+            "comment_text": "Test Comment",
+            "pub_date": "2023-01-01T12:00:00+00:00",
+            "username": None,
+            "ip": "127.0.0.1",
+        }
+
+        comment = convert_comment(json_comment)
+
+        self.assertEqual(comment.comment_text, "Test Comment")
+        self.assertEqual(
+            comment.pub_date,
+            datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC),
+        )
+        self.assertEqual(comment.ip, "127.0.0.1")
+
+    def test_convert_post(self):
+        """Test convert_post correctly parses JSON post data"""
+        json_post: ExportPostData = {
+            "post_text": "Test Post",
+            "pub_date": "2023-01-01T12:00:00+00:00",
+            "comments": [
+                {
+                    "comment_text": "Test Comment",
+                    "pub_date": "2023-01-01T12:30:00+00:00",
+                    "username": None,
+                    "ip": "127.0.0.1",
+                }
+            ],
+        }
+
+        post = convert_post(json_post)
+
+        self.assertEqual(post.post_text, "Test Post")
+        self.assertEqual(
+            post.pub_date, datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
+        )
+        self.assertEqual(len(post.comments), 1)
+        self.assertEqual(post.comments[0].comment_text, "Test Comment")
