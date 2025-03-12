@@ -18,6 +18,9 @@ def validate_size(file: File):
 
 
 class ImportDataForm(forms.Form):
+    # NOTE: files don't go to cleaned data, so you can't really run form
+    # validation in this case.
+    # You can do field validation, thankfully.
     data_file = forms.FileField(
         validators=[
             FileExtensionValidator(allowed_extensions=["json"]),
