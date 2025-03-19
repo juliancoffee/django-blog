@@ -1,0 +1,21 @@
+{# htmx fragment #}
+
+<h1>Import data</h1>
+
+<div id="import-widget">
+    <!-- NOTE:
+    encoding is important here, you can't upload files without proper encoding
+    -->
+    <form
+        class="list-form"
+        hx-post="{% url 'blog:management:handle_import_preview' %}"
+        hx-target="#import-widget"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+    >
+        {% csrf_token %}
+        {{ form }}
+
+        <button>Generate preview</button>
+    </form>
+</div>

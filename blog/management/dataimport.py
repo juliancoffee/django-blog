@@ -2,7 +2,7 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Optional, assert_never
 
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
@@ -14,6 +14,7 @@ from .dataexport import CommentData as ExportCommentData
 from .dataexport import Data as ExportData
 from .dataexport import PostData as ExportPostData
 from .forms import ImportDataForm
+from .utils import Err, Ok, Result
 
 logger = logging.getLogger(__name__)
 
@@ -53,15 +54,13 @@ def convert_comment(json_comment: ExportCommentData) -> CommentData:
     return CommentData(comment_text=text, pub_date=date, ip=ip)
 
 
-# Shouldn't we return something here? Status code or smth.
-# Just raise an exception?
-#
-# Gosh, how do people live without enums.
-def parse_import_data(request: HttpRequest) -> Data:
+def parse_import_data(
+    request: HttpRequest,
+) -> Result[Data, ImportDataForm]:
+    """Returns the data along with the form or gives just form with errors"""
     form = ImportDataForm(request.POST, request.FILES)
     if not form.is_valid():
-        # TODO: make HTMX work with this
-        raise RuntimeError(f"form is invalid, {form.errors.get_json_data()}")
+        return Result.err(form)
 
     data_file = request.FILES["data_file"]
     # Ok, I hope that I won't ever pass multiple files here.
@@ -76,11 +75,13 @@ def parse_import_data(request: HttpRequest) -> Data:
     posts = list(map(convert_post, json_data["posts"]))
 
     parsed_data = Data(posts=posts)
-    return parsed_data
+    return Result.ok(parsed_data)
 
 
 @transaction.atomic
-def load_all_data_in(request: HttpRequest) -> Optional[tuple[int, int]]:
+def load_all_data_in(
+    request: HttpRequest,
+) -> Result[tuple[int, int], ImportDataForm]:
     # Logic considerations:
     #
     # 1) We probably don't want to duplicate existing posts.
@@ -105,7 +106,14 @@ def load_all_data_in(request: HttpRequest) -> Optional[tuple[int, int]]:
     # - The function is wrapped with @transaction.atomic, it will do automatic
     # rollback if any exception is encountered
 
-    data = parse_import_data(request)
+    match parse_import_data(request).get():
+        case Err(form):
+            return Result.err(form)
+        case Ok(d):
+            data = d
+        case r:
+            assert_never(r)
+
     # Algorithmic shenanigans
     # Build skiplist for duplicates via two O(n) passes instead of a nested loop
     post_map: dict[str, PostData] = {p.post_text: p for p in data.posts}
@@ -131,4 +139,4 @@ def load_all_data_in(request: HttpRequest) -> Optional[tuple[int, int]]:
             )
             comment_counter += 1
 
-    return post_counter, comment_counter
+    return Result.ok((post_counter, comment_counter))

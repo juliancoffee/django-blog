@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+from typing import assert_never
 
 from django.contrib.auth.decorators import user_passes_test
 from django.http import FileResponse, HttpRequest, HttpResponse
@@ -12,6 +13,7 @@ from blog.utils import user_is_staff_check
 from .dataexport import get_all_data
 from .dataimport import load_all_data_in, parse_import_data
 from .forms import ExportDataForm, ImportDataForm
+from .utils import Err, Ok
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ def data_console(request: HttpRequest) -> HttpResponse:
     export_form = ExportDataForm()
     return render(
         request,
-        "blog/export_page.html",
+        "blog/data_console.html",
         {
             "import_form": import_form,
             "export_form": export_form,
@@ -67,25 +69,42 @@ def download_exported_file(request: HttpRequest) -> HttpResponse | FileResponse:
 @user_passes_test(user_is_staff_check)
 @require_POST
 def handle_import_preview(request: HttpRequest) -> HttpResponse:
-    data = parse_import_data(request)
-    return render(request, "blog/import_preview_fragment.html", {"data": data})
+    res = parse_import_data(request)
+
+    data = res.ok_or_none()
+    form = res.err_or_none()
+
+    # FIXME: re-rendering this and moving to the next stage, loses the file
+    # in the form.
+    # TODO: Use HTMX's out-of-band swaps instead or smth like it.
+    return render(
+        request,
+        "blog/import_preview_fragment.html",
+        {
+            "data": data,
+            "form": form,
+        },
+    )
 
 
 @user_passes_test(user_is_staff_check)
 @require_POST
 def handle_import(request: HttpRequest) -> HttpResponse:
-    counters = None
     try:
-        counters = load_all_data_in(request)
+        res = load_all_data_in(request).get()
     except Exception:
         logger.error("failed to import the data", exc_info=True)
 
-    if counters is not None:
-        posts, comments = counters
-        return HttpResponse(
-            "<p>import completed! {} posts, {} comments </p>".format(
-                posts, comments
+    match res:
+        case Ok(counters):
+            posts, comments = counters
+            return HttpResponse(
+                "<p>import completed! {} posts, {} comments </p>".format(
+                    posts, comments
+                )
             )
-        )
-    else:
-        return HttpResponse("<p>sommry, something went wrong</p>")
+        case Err(form):
+            logger.error(form)
+            return HttpResponse("<p>sommry, something went wrong</p>")
+        case r:
+            assert_never(r)
