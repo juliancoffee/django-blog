@@ -32,7 +32,10 @@
             {% endif %}
         </div>
     </header>
+
+    <span id="tap"> Webserver error </span>
     {% block content %}{% endblock %}
+
     <footer>
         <span>
             Made with Django &copy juliancoffee 2024
@@ -41,5 +44,20 @@
             {% endif %}
         </span>
     </footer>
+    <script>
+        document.body.addEventListener('htmx:responseError', function (evt) {
+            // Start displaying and launch an animation.
+            document.getElementById("tap").className = "hit"
+            // NOTE: this can glitch if hit repeatedly, so in theory
+            // this should work by adding and then removing multiple elements.
+            //
+            // But this is simple, yet functional enough.
+            // And in normal circumstances, it's even pretty.
+            setTimeout(function() {
+                // Reset to normal
+                document.getElementById("tap").classList.remove("hit")
+            }, 1000)
+        })
+    </script>
 </body>
 </html>
