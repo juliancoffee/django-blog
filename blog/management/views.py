@@ -1,8 +1,10 @@
 import io
 import json
 import logging
+from typing import Any, Optional
 
 from django.contrib.auth.decorators import user_passes_test
+from django.core.exceptions import ValidationError
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
@@ -10,7 +12,15 @@ from django.views.decorators.http import require_GET, require_POST
 from blog.utils import user_is_staff_check
 
 from .dataexport import get_all_data
-from .dataimport import data_from, load_all_data_in
+from .dataimport import (
+    Data as ImportData,
+)
+from .dataimport import (
+    DataError,
+    FormError,
+    data_from,
+    load_all_data_in,
+)
 from .forms import ExportDataForm, ImportDataForm
 
 logger = logging.getLogger(__name__)
@@ -67,10 +77,21 @@ def download_exported_file(request: HttpRequest) -> HttpResponse | FileResponse:
 @user_passes_test(user_is_staff_check)
 @require_POST
 def handle_import_preview(request: HttpRequest) -> HttpResponse:
-    res = data_from(request)
+    data: Optional[ImportData] = None
+    form: Optional[Any] = None
 
-    data = res.ok_or_none()
-    form = res.err_or_none()
+    try:
+        data = data_from(request).ok_or_raise()
+    except FormError as e:
+        form = e.form
+    except DataError as e:
+        logger.error(e.e.errors())
+
+        form = ImportDataForm(request.POST, request.FILES)
+        form.add_error(
+            "data_file",
+            ValidationError("Unable to parse the file", code="format"),
+        )
 
     return render(
         request,
@@ -86,14 +107,15 @@ def handle_import_preview(request: HttpRequest) -> HttpResponse:
 @require_POST
 def handle_import(request: HttpRequest) -> HttpResponse:
     try:
-        # TODO: ok, screw Result, just properly use exceptions
         data = data_from(request).ok_or_raise()
-        posts, comments = load_all_data_in(data)
-        return HttpResponse(
-            "<p>import completed! {} posts, {} comments </p>".format(
-                posts, comments
-            )
-        )
-    except Exception:
-        logger.error("failed to import the data", exc_info=True)
+    except FormError as e:
+        return HttpResponse(e)
+    except DataError:
         return HttpResponse("<p>sommry, something went wrong</p>")
+
+    posts, comments = load_all_data_in(data)
+    return HttpResponse(
+        "<p>import completed! {} posts, {} comments </p>".format(
+            posts, comments
+        )
+    )

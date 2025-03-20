@@ -11,21 +11,13 @@ E = TypeVar("E")
 class Result(Generic[R, E]):
     # Poor's man tagged unions
     #
-    # I suspect there are ways to implement this in a cleaner way, but it's a
-    # rough sketch.
-    # For example I'm sure there a ways to use TypeIs or TypeGuard somewhere to
-    # make it more convenient to use.
+    # It this monadic horror required? Well, probably not.
+    # It kind of makes my life easier though.
+    # At the very least, it gives you a way to document exception without
+    # giving up on typechecking.
     #
-    # It this monadic horror required? Well, probably not, but it makes my life
-    # eaiser.
-    #
-    # P. S. `dry-python/returns` exists, but my Result is walk in the park in
-    # comparison.
-    # Random package named `poltergeist` or `rustedpy/result` looks prettier,
-    # but both aren't actively maintained. Not like it needs a lot of work
-    # though, the interface is pretty defined and implementation is simple.
-    #
-    # In any case, this pattern isn't really popular in python world :(
+    # In any case, this pattern isn't really popular in python world, but
+    # let me have my little experiment on a solo project.
 
     _res: R | E
     _state: Literal["OK", "ERR"]
@@ -65,7 +57,10 @@ class Result(Generic[R, E]):
     def ok_or_raise(self) -> R:
         x = self.ok_or_none()
         if x is None:
-            raise ValueError(f"unexpected error: {self._res}")
+            if isinstance(self._res, Exception):
+                raise self._res
+            else:
+                raise ValueError(f"unexpected error: {self._res}")
         return x
 
     def err_or_raise(self) -> E:

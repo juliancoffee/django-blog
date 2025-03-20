@@ -1,4 +1,3 @@
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
@@ -7,12 +6,10 @@ from typing import Optional
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.http import HttpRequest
+from pydantic import BaseModel, ValidationError
 
 from blog.models import Post
 
-from .dataexport import CommentData as ExportCommentData
-from .dataexport import Data as ExportData
-from .dataexport import PostData as ExportPostData
 from .forms import ImportDataForm
 from .utils import Result
 
@@ -20,49 +17,42 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class CommentData:
+class FormError(Exception):
+    form: ImportDataForm
+
+
+@dataclass
+class DataError(Exception):
+    e: ValidationError
+
+
+class CommentData(BaseModel):
     comment_text: str
     pub_date: datetime
     ip: Optional[str]
 
 
-@dataclass
-class PostData:
+class PostData(BaseModel):
     post_text: str
     pub_date: datetime
     comments: list[CommentData]
 
 
-@dataclass
 # TODO: add users
-class Data:
+class Data(BaseModel):
     posts: list[PostData]
-
-
-def convert_post(json_post: ExportPostData) -> PostData:
-    text = json_post["post_text"]
-    date = datetime.fromisoformat(json_post["pub_date"])
-
-    comments = list(map(convert_comment, json_post["comments"]))
-    return PostData(post_text=text, pub_date=date, comments=comments)
-
-
-def convert_comment(json_comment: ExportCommentData) -> CommentData:
-    text = json_comment["comment_text"]
-    date = datetime.fromisoformat(json_comment["pub_date"])
-    ip = json_comment["ip"]
-    return CommentData(comment_text=text, pub_date=date, ip=ip)
 
 
 def data_from(
     request: HttpRequest,
-) -> Result[Data, ImportDataForm]:
+) -> Result[Data, FormError | DataError]:
     """Returns the data along with the form or gives just form with errors"""
     form = ImportDataForm(request.POST, request.FILES)
     if not form.is_valid():
-        return Result.err(form)
+        e = FormError(form)
+        return Result.err(e)
 
-    data_file = request.FILES["data_file"]
+    data_file = form.files["data_file"]
     # Ok, I hope that I won't ever pass multiple files here.
     # If I do, let it crash
     #
@@ -71,11 +61,12 @@ def data_from(
     assert isinstance(data_file, UploadedFile)
 
     raw_data = data_file.read()
-    json_data: ExportData = json.loads(raw_data)
-    posts = list(map(convert_post, json_data["posts"]))
+    try:
+        parsed = Data.model_validate_json(raw_data, strict=True)
+    except ValidationError as e:
+        return Result.err(DataError(e))
 
-    parsed_data = Data(posts=posts)
-    return Result.ok(parsed_data)
+    return Result.ok(parsed)
 
 
 @transaction.atomic

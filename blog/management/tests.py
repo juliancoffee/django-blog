@@ -9,21 +9,15 @@ from datetime import UTC, datetime
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 
 from blog.models import Comment, Post
 
-from .dataexport import CommentData as ExportDataComment
-from .dataexport import PostData as ExportPostData
 from .dataexport import format_date, get_all_data, get_post_data
-from .dataimport import (
-    convert_comment,
-    convert_post,
-    data_from,
-    load_all_data_in,
-)
+from .dataimport import FormError, data_from, load_all_data_in
 
 # It still doesn't work half of the time
 logging.disable()
@@ -162,9 +156,8 @@ class DataExportTests(TestCase):
         self.assertEqual(response["Content-Type"], "application/json")
 
         # Parse the JSON response
-
-        # mypy can't figure out it's a FileResponse
-        json_data = json.loads(b"".join(response.streaming_content))  # type: ignore
+        assert hasattr(response, "streaming_content")
+        json_data = json.loads(b"".join(response.streaming_content))
 
         # Verify structure
         self.assertIn("posts", json_data)
@@ -188,8 +181,10 @@ class DataExportTests(TestCase):
             {"download": True},
         )
 
-        # mypy can't figure out it's a FileResponse
-        json_data = json.loads(b"".join(response.streaming_content))  # type: ignore
+        assert hasattr(response, "streaming_content")
+        json_data = json.loads(b"".join(response.streaming_content))
+
+        # Verify structure
         self.assertEqual(len(json_data["posts"]), 0)
 
 
@@ -298,8 +293,8 @@ class DataImportTests(TestCase):
             reverse("blog:management:handle_import"),
             {"data_file": invalid_file},
         )
-        # NOTE: all this test does is tests what we return 200 no matter what
 
+        # NOTE: all this test does is tests what we return 200 no matter what
         # Because we're using HTMX we want to return 200 pretty much always
         self.assertEqual(response.status_code, 200)
 
@@ -347,9 +342,8 @@ class DataImportUnitTest(TestCase):
             {"data_file": invalid_file},
         )
 
-        # TODO: do better error handling here
-        #with self.assertRaises(RuntimeError):
-            #data_from(request)
+        with self.assertRaises(FormError):
+            data_from(request).ok_or_raise()
 
     def test_import_transaction_atomicity(self):
         """Test that imports are atomic - either all succeeds or nothing changes"""
@@ -367,48 +361,8 @@ class DataImportUnitTest(TestCase):
         initial_post_count = Post.objects.count()
         initial_comment_count = Comment.objects.count()
 
-        # Create import data with:
-        # 1. Some valid posts at the beginning
-        # 2. An invalid post that will cause an exception during processing
-        malformed_data = {
-            "posts": [
-                # Valid post 1
-                {
-                    "post_text": "Valid Post 1",
-                    "pub_date": "2023-02-01T10:00:00+00:00",
-                    "comments": [
-                        {
-                            "comment_text": "Valid Comment 1",
-                            "pub_date": "2023-02-01T10:30:00+00:00",
-                            "username": None,
-                            "ip": "192.168.1.1",
-                        }
-                    ],
-                },
-                # Valid post 2
-                {
-                    "post_text": "Valid Post 2",
-                    "pub_date": "2023-02-02T10:00:00+00:00",
-                    "comments": [
-                        {
-                            "comment_text": "Valid Comment 2",
-                            "pub_date": "2023-02-02T10:30:00+00:00",
-                            "username": None,
-                            "ip": "192.168.1.2",
-                        }
-                    ],
-                },
-                # Invalid post - missing required pub_date field
-                {
-                    "post_text": "Invalid Post - Missing pub_date",
-                    "comments": [],  # No comments to keep it simple
-                },
-            ],
-            "users": [],
-        }
-
         # Create the test file with malformed data
-        import_file = create_test_file(malformed_data)
+        import_file = create_test_file()
 
         # Try to import the malformed data
         rf = RequestFactory()
@@ -417,10 +371,14 @@ class DataImportUnitTest(TestCase):
             {"data_file": import_file},
         )
 
-        # TODO: come with something better
-        # with self.assertRaises(KeyError):
-        # TODO: fix types
-        # load_all_data_in(request)
+        data = data_from(request).ok_or_raise()
+
+        # Intentionally fuck up second post
+        data.posts[1].pub_date = None  # type: ignore[assignment]
+
+        # Catch an integrity error
+        with self.assertRaises(IntegrityError):
+            load_all_data_in(data)
 
         # Verify database state is unchanged
         self.assertEqual(
@@ -436,54 +394,10 @@ class DataImportUnitTest(TestCase):
 
         # Verify that none of the valid posts were imported either
         self.assertFalse(
-            Post.objects.filter(post_text="Valid Post 1").exists(),
+            Post.objects.filter(post_text="Imported Post 1").exists(),
             "Valid Post 1 should not exist after a failed transaction",
         )
         self.assertFalse(
-            Post.objects.filter(post_text="Valid Post 2").exists(),
+            Post.objects.filter(post_text="Imported Post 2").exists(),
             "Valid Post 2 should not exist after a failed transaction",
         )
-
-
-class ConvertorsTest(TestCase):
-    def test_convert_comment(self):
-        """Test convert_comment correctly parses JSON comment data"""
-        json_comment: ExportDataComment = {
-            "comment_text": "Test Comment",
-            "pub_date": "2023-01-01T12:00:00+00:00",
-            "username": None,
-            "ip": "127.0.0.1",
-        }
-
-        comment = convert_comment(json_comment)
-
-        self.assertEqual(comment.comment_text, "Test Comment")
-        self.assertEqual(
-            comment.pub_date,
-            datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC),
-        )
-        self.assertEqual(comment.ip, "127.0.0.1")
-
-    def test_convert_post(self):
-        """Test convert_post correctly parses JSON post data"""
-        json_post: ExportPostData = {
-            "post_text": "Test Post",
-            "pub_date": "2023-01-01T12:00:00+00:00",
-            "comments": [
-                {
-                    "comment_text": "Test Comment",
-                    "pub_date": "2023-01-01T12:30:00+00:00",
-                    "username": None,
-                    "ip": "127.0.0.1",
-                }
-            ],
-        }
-
-        post = convert_post(json_post)
-
-        self.assertEqual(post.post_text, "Test Post")
-        self.assertEqual(
-            post.pub_date, datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
-        )
-        self.assertEqual(len(post.comments), 1)
-        self.assertEqual(post.comments[0].comment_text, "Test Comment")
