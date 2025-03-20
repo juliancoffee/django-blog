@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, Literal, TypeVar, cast
+from typing import Generic, Literal, TypeVar
 
 R = TypeVar("R")
 E = TypeVar("E")
@@ -19,54 +19,54 @@ class Result(Generic[R, E]):
     # In any case, this pattern isn't really popular in python world, but
     # let me have my little experiment on a solo project.
 
-    _res: R | E
-    _state: Literal["OK", "ERR"]
+    _res: tuple[R, Literal["OK"]] | tuple[E, Literal["ERR"]]
 
     @staticmethod
     def ok(val: R) -> Result[R, E]:
-        return Result(_res=val, _state="OK")
+        return Result(_res=(val, "OK"))
 
     @staticmethod
     def err(val: E) -> Result[R, E]:
-        return Result(_res=val, _state="ERR")
+        return Result(_res=(val, "ERR"))
 
     def get(self) -> Ok[R] | Err[E]:
-        if self._state == "OK":
-            return Ok(_val=cast("R", self._res))
+        if self._res[1] == "OK":
+            return Ok(_val=self._res[0])
         else:
-            return Err(_val=cast("E", self._res))
+            return Err(_val=self._res[0])
 
     def is_ok(self) -> bool:
-        return self._state == "OK"
+        return self._res[1] == "OK"
 
     def is_err(self) -> bool:
         return not self.is_ok()
 
     def ok_or_none(self) -> R | None:
-        if self.is_ok():
-            return cast("R", self._res)
+        if self._res[1] == "OK":
+            return self._res[0]
         else:
             return None
 
     def err_or_none(self) -> E | None:
-        if self.is_err():
-            return cast("E", self._res)
+        if self._res[1] == "ERR":
+            return self._res[0]
         else:
             return None
 
     def ok_or_raise(self) -> R:
         x = self.ok_or_none()
         if x is None:
-            if isinstance(self._res, Exception):
-                raise self._res
-            else:
-                raise ValueError(f"unexpected error: {self._res}")
+            match self._res[0]:
+                case Exception() as e:
+                    raise e
+                case rest:
+                    raise ValueError(f"unexpected error: {rest}")
         return x
 
     def err_or_raise(self) -> E:
         x = self.err_or_none()
         if x is None:
-            raise ValueError(f"unexpected ok: {self._res}")
+            raise ValueError(f"unexpected ok: {self._res[0]}")
         return x
 
 
