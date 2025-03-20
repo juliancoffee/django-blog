@@ -2,7 +2,7 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, assert_never
+from typing import Optional
 
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
@@ -14,7 +14,7 @@ from .dataexport import CommentData as ExportCommentData
 from .dataexport import Data as ExportData
 from .dataexport import PostData as ExportPostData
 from .forms import ImportDataForm
-from .utils import Err, Ok, Result
+from .utils import Result
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def convert_comment(json_comment: ExportCommentData) -> CommentData:
     return CommentData(comment_text=text, pub_date=date, ip=ip)
 
 
-def parse_import_data(
+def data_from(
     request: HttpRequest,
 ) -> Result[Data, ImportDataForm]:
     """Returns the data along with the form or gives just form with errors"""
@@ -79,9 +79,7 @@ def parse_import_data(
 
 
 @transaction.atomic
-def load_all_data_in(
-    request: HttpRequest,
-) -> Result[tuple[int, int], ImportDataForm]:
+def load_all_data_in(data: Data) -> tuple[int, int]:
     # Logic considerations:
     #
     # 1) We probably don't want to duplicate existing posts.
@@ -105,14 +103,6 @@ def load_all_data_in(
     # Integrity considertations:
     # - The function is wrapped with @transaction.atomic, it will do automatic
     # rollback if any exception is encountered
-
-    match parse_import_data(request).get():
-        case Err(form):
-            return Result.err(form)
-        case Ok(d):
-            data = d
-        case r:
-            assert_never(r)
 
     # Algorithmic shenanigans
     # Build skiplist for duplicates via two O(n) passes instead of a nested loop
@@ -139,4 +129,4 @@ def load_all_data_in(
             )
             comment_counter += 1
 
-    return Result.ok((post_counter, comment_counter))
+    return post_counter, comment_counter

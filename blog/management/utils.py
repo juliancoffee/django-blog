@@ -65,13 +65,13 @@ class Result(Generic[R, E]):
     def ok_or_raise(self) -> R:
         x = self.ok_or_none()
         if x is None:
-            raise ValueError("unexpected error: {self._res}")
+            raise ValueError(f"unexpected error: {self._res}")
         return x
 
     def err_or_raise(self) -> E:
         x = self.err_or_none()
         if x is None:
-            raise ValueError("unexpected ok: {self._res}")
+            raise ValueError(f"unexpected ok: {self._res}")
         return x
 
 
