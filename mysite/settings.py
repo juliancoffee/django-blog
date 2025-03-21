@@ -54,7 +54,7 @@ if EXTERNAL_HOSTNAME:
 INSTALLED_APPS = [
     # ours
     "blog.accounts",
-    "blog.export",
+    "blog.management",
     "blog.notifications",
     "blog.devmode",
     "blog",

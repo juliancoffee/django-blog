@@ -1,0 +1,53 @@
+{# htmx fragment #}
+
+{% comment %}
+Offtopic: handling files is difficult, it turns out.
+
+The biggest difficulty is that you can't really recreate the form, in a usual
+way at least, because this will nuke the file you have in your browser.
+
+I'm actually not even sure if this would work in "real" frontend framework, but
+HTMX definitely doesn't seem to help here.
+
+The idea was (and still is) to have a multi-stage form, where first you submit
+the datafile you want to use for import and have it previewed, and then you
+can view the changes and reapply them.
+
+This means that you need to reach out to different endpoints, which we
+must somehow encode in our form.
+
+And, unfortunately, we can't change form attribute to change its endpoint, we
+need to do it via buttons we can replace with out-of-band swaps.
+There might be some magic way you can use with HTMX to do what we want, but
+yeah, this sounds simpler.
+{% endcomment %}
+
+<h1>Import data</h1>
+
+<div id="import-widget">
+    <ul id="import-form-preview"></ul>
+    <div id="import-form-error"></div>
+
+    <form
+        class="list-form"
+        hx-encoding="multipart/form-data"
+    >
+        {% csrf_token %}
+        {{ form }}
+
+        <!--
+        The sad truth about putting action here is that we disable browser
+        validation.
+        But it is what it is.
+        -->
+        <button
+            id="import-submit-button"
+            hx-post="{% url 'blog:management:handle_import_preview' %}"
+            hx-target="#import-form-preview"
+            hx-swap="outerHTML"
+        >
+            Generate preview
+        </button>
+    </form>
+    <div id="import-form-results"><div>
+</div>

@@ -14,5 +14,10 @@ jobs:
         with:
           args: check
 
+      - name: Run Ruff Format
+        uses: astral-sh/ruff-action@v1
+        with:
+          args: format --check
+
       - name: Status
         run: echo "${{ job.status }}"

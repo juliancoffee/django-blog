@@ -7,8 +7,8 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from blog.notifications.forms import SubscribeForm
-from blog.notifications.models import Subscription
+from .forms import SubscribeForm
+from .models import Subscription
 
 
 class SubscriptionModelTests(TestCase):

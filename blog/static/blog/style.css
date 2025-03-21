@@ -62,3 +62,35 @@ footer {
     max-width: fit-content;
     margin: auto;
 }
+
+#tap {
+    display: none;
+}
+
+#tap.hit {
+    /* to undo display none from above */
+    display: block;
+
+    /* make it good and visible */
+    color: white;
+    background-color: red;
+
+    /* place at the top */
+    position: absolute;
+    top: 0%;
+    left: 50%;
+
+    /* neat animations, of course */
+    animation-duration: 1s;
+    animation-name: ease-out;
+}
+
+@keyframes ease-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0.0;
+    }
+}

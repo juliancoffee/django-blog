@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
-from blog.utils import get_user_ip
+from blog.utils import get_user_ip, test_with
 
 from .forms import CommentForm
 from .models import Post
@@ -38,30 +38,35 @@ def index(request) -> HttpResponse:
     return render(request, "blog/index.html", context)
 
 
+def random_post_ids() -> list[tuple[int]]:
+    # NOTE: it's must be a tuple
+    #
+    # Also, it doesn't really matter what we put here, because during tests
+    # we have no posts and we'd get 404 in any case.
+    random_post_id = (22,)
+
+    return [random_post_id]
+
+
 @login_not_required
+@test_with(random_post_ids)
 def detail(request, post_id: int) -> HttpResponse:
-    # TODO: this is premature optimization
+    # NOTE: We do two SQL queries, one to get the post, another to get the
+    # comments.
+    # We could in theory, first get all the comments for this post, and then
+    # select_related("post") and do a JOIN, which would result in us doing just
+    # one query.
+    # Would it be faster? Probably ...?
+    # It would consume much more memory though, because we'd duplicate the post
+    # each time, and posts contain text, which makes them kinda heavy.
+    # 200 characters = 200 bytes.
+    # Now multiply it by number of comments.
     #
-    # but
+    # Probably doesn't matter either way at this scale, so we're just letting
+    # Django do it's thing and issue two queries.
     #
-    # we do two SQL queries here
-    #
-    # one to get the post with such id
-    # second to get all the comments for such id
-    #
-    # couldn't this be just one query with a join or smth?
-    #
-    # I mean, we would still need data for post itself
-    #
-    # its pub_data and post_text, but it's hard to imagine something
-    # be as slow in this world as an another SQL query
-    #
-    # I guess I could run it live with DJDT enabled and check the timings
-    #
-    # and then I could try to optimize it just for fun
-    #
-    # I couldn't find exactly JOIN, but I found something like prefetch_related
-    # and select_related
+    # P. S. I think I saw more than two queries with Django Debug Toolbar.
+    # I don't want to look into it right now though.
     p = get_object_or_404(Post, pk=post_id)
     return render(
         request,
@@ -75,6 +80,7 @@ def detail(request, post_id: int) -> HttpResponse:
 
 
 @method_decorator(login_not_required, name="dispatch")
+@method_decorator(test_with(random_post_ids), name="dispatch")
 class CommentView(FormView):
     template_name = "blog/detail.html"
     form_class = CommentForm

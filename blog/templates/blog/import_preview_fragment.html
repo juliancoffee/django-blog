@@ -1,5 +1,15 @@
 {# for use with htmx, not a full document #}
-<ul>
+
+{% if form %}
+    <div id="import-form-error" hx-swap-oob="innerHTML">
+        {{ form.errors }}
+    </div>
+{% else %}
+    {# erase errors if valid #}
+    <div id="import-form-error" hx-swap-oob="innerHTML"></div>
+{% endif %}
+
+<ul id="import-form-preview">
 {% for post in data.posts %}
     <li>{{ post.post_text }} <sup>{{ post.pub_date }}</sup>
         <ul>
@@ -16,3 +26,15 @@
     </li>
 {% endfor %}
 </ul>
+
+{# transition to execution stage if ok #}
+{% if data %}
+<button
+    id="import-submit-button"
+    hx-swap-oob="outerHTML"
+    hx-post="{% url 'blog:management:handle_import' %}"
+    hx-target="#import-form-results"
+>
+    Execute import
+</button>
+{% endif %}

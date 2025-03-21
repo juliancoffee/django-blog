@@ -1,0 +1,20 @@
+{% extends "./base.html" %}
+
+{% block content %}
+    <!-- Import widget -->
+    {% with form=import_form stage="preview" %}
+        {% include "./import_form_fragment.html"%}
+    {% endwith %}
+    <!-- Export widget -->
+    <h1> Export Data </h1>
+    <form
+        class="list-form"
+        action="{% url 'blog:management:download_exported_file' %}"
+        method=GET
+    >
+        {{ export_form }}
+        <button>
+            Export the data as ".json" file
+        </button>
+    </form>
+{% endblock %}
