@@ -12,8 +12,11 @@ def validate_size(file: File):
     # 5 megabytes
     MAX_SIZE = 5 * 1024 * 1024
     if file.size > MAX_SIZE:
+        size_in_mb = file.size / (1024**2)
+        max_size_in_mb = MAX_SIZE / (1024**2)
         raise ValidationError(
-            f"File size {file.size / (1024**2)}MB > {MAX_SIZE / (1024**2)}MB"
+            f"File size {size_in_mb:.1f}MB > {max_size_in_mb:.1f}MB",
+            code="file_size_exceeded",
         )
 
 

@@ -6,10 +6,12 @@
 import json
 import logging
 from datetime import UTC, datetime
+from itertools import chain
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.utils import IntegrityError
+from django.forms import Form
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
@@ -281,26 +283,6 @@ class DataImportTests(TestCase):
         self.assertEqual(Post.objects.count(), 0)
         self.assertEqual(Comment.objects.count(), 0)
 
-    def test_import_invalid_file_format(self):
-        """Test importing with an invalid file format"""
-        # Create a non-JSON file
-        invalid_file = SimpleUploadedFile(
-            "test.txt", b"This is not JSON", content_type="text/plain"
-        )
-
-        # Try to import invalid file
-        response = self.client.post(
-            reverse("blog:management:handle_import"),
-            {"data_file": invalid_file},
-        )
-
-        # NOTE: all this test does is tests what we return 200 no matter what
-        # Because we're using HTMX we want to return 200 pretty much always
-        self.assertEqual(response.status_code, 200)
-
-        # Database should remain empty
-        self.assertEqual(Post.objects.count(), 0)
-
     def test_import_preserves_data_integrity(self):
         """Test that import maintains referential integrity"""
         # Create and upload import file
@@ -401,3 +383,185 @@ class DataImportUnitTest(TestCase):
             Post.objects.filter(post_text="Imported Post 2").exists(),
             "Valid Post 2 should not exist after a failed transaction",
         )
+
+
+class FormTestCase(TestCase):
+    # I know that assertFormError exists, but it requires a fieldname, and that's
+    # a weird limitation imo, so here's my version instead.
+    def assertFormContainsErrorCode(self, response, error_code: str):
+        """Check that form errors contain the error with error_code"""
+        form: Form = response.context["form"]
+        errors = form.errors.get_json_data()
+
+        # flatmap and find the code for each message for each field
+        # NOTE: eagerly evaluate the iterable for better error messages, but
+        # it'd work without it as well
+        error_codes = list(
+            map(lambda e: e["code"], chain.from_iterable(errors.values()))
+        )
+
+        self.assertIn(error_code, error_codes)
+
+
+class ImportErrorHandlingTests(FormTestCase):
+    def setUp(self):
+        # Create a staff user for testing
+        from django.contrib.auth.models import User
+
+        self.staff_user = User.objects.create_user(
+            username="staffuser", password="testpassword", is_staff=True
+        )
+        self.client.force_login(self.staff_user)
+
+        # Define various test files
+        self.empty_file = SimpleUploadedFile(
+            "empty.json", b"", content_type="application/json"
+        )
+
+        self.non_json_file = SimpleUploadedFile(
+            "test.txt", b"This is not JSON", content_type="text/plain"
+        )
+
+        self.invalid_json = SimpleUploadedFile(
+            "invalid.json",
+            b"{not valid json syntax}",
+            content_type="application/json",
+        )
+
+        self.malformed_json = SimpleUploadedFile(
+            "malformed.json",
+            b'{"this_is": "valid json", "but": "wrong structure"}',
+            content_type="application/json",
+        )
+
+        # Create an oversized file (> 5MB)
+        oversized_content = b"x" * (10 * 1024 * 1024 + 1)  # 10MB + 1 byte
+        self.oversized_file = SimpleUploadedFile(
+            "oversized.json", oversized_content, content_type="application/json"
+        )
+
+    # Tests for handle_import_preview
+
+    def test_preview_missing_file(self):
+        """Test that import preview returns form error when no file is submitted"""
+        response = self.client.post(
+            reverse("blog:management:handle_import_preview"),
+            {},  # Empty form data
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormContainsErrorCode(response, "required")
+        self.assertContains(response, '<div id="import-form-error"')
+
+    def test_preview_non_json_file(self):
+        """Test that import preview validates file extension"""
+        response = self.client.post(
+            reverse("blog:management:handle_import_preview"),
+            {"data_file": self.non_json_file},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormContainsErrorCode(response, "invalid_extension")
+        self.assertContains(response, '<div id="import-form-error"')
+
+    def test_preview_oversized_file(self):
+        """Test that import preview validates file size"""
+        response = self.client.post(
+            reverse("blog:management:handle_import_preview"),
+            {"data_file": self.oversized_file},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormContainsErrorCode(response, "file_size_exceeded")
+        self.assertContains(response, '<div id="import-form-error"')
+
+    def test_preview_invalid_json_syntax(self):
+        """Test that import preview handles invalid JSON syntax"""
+        response = self.client.post(
+            reverse("blog:management:handle_import_preview"),
+            {"data_file": self.invalid_json},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormContainsErrorCode(response, "format")
+        self.assertContains(response, "Unable to parse the file")
+        self.assertContains(response, '<div id="import-form-error"')
+
+    def test_preview_malformed_data_structure(self):
+        """Test that import preview validates data structure"""
+        response = self.client.post(
+            reverse("blog:management:handle_import_preview"),
+            {"data_file": self.malformed_json},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFormContainsErrorCode(response, "format")
+        self.assertContains(response, "Unable to parse the file")
+        self.assertContains(response, '<div id="import-form-error"')
+
+    def test_preview_no_import_button_on_error(self):
+        """Test that the import button isn't shown when preview has errors"""
+        response = self.client.post(
+            reverse("blog:management:handle_import_preview"),
+            {"data_file": self.invalid_json},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="import-submit-button"')
+
+    # Tests for handle_import
+
+    def test_import_missing_file(self):
+        """Test that import returns error when no file is submitted"""
+        response = self.client.post(
+            reverse("blog:management:handle_import"),
+            {},  # Empty form data
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # The implementation just returns HttpResponse with the FormError
+        self.assertContains(response, "This field is required")
+
+    def test_import_non_json_file(self):
+        """Test that import validates file extension"""
+        response = self.client.post(
+            reverse("blog:management:handle_import"),
+            {"data_file": self.non_json_file},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # The implementation returns HttpResponse with the FormError
+        self.assertContains(response, "File extension")
+
+    def test_import_oversized_file(self):
+        """Test that import validates file size"""
+        response = self.client.post(
+            reverse("blog:management:handle_import"),
+            {"data_file": self.oversized_file},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # The implementation returns HttpResponse with the FormError
+        self.assertContains(response, "File size")
+
+    def test_import_invalid_json_syntax(self):
+        """Test that import handles invalid JSON syntax"""
+        response = self.client.post(
+            reverse("blog:management:handle_import"),
+            {"data_file": self.invalid_json},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # The implementation returns a generic error message for DataError
+        self.assertContains(response, "sommry, something went wrong")
+
+    def test_import_malformed_data_structure(self):
+        """Test that import validates data structure"""
+        response = self.client.post(
+            reverse("blog:management:handle_import"),
+            {"data_file": self.malformed_json},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # The implementation returns a generic error message for DataError
+        self.assertContains(response, "sommry, something went wrong")
