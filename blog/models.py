@@ -1,8 +1,62 @@
 import datetime
+import logging
+from collections.abc import Iterable
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.mail import send_mass_mail
 from django.db import models
 from django.utils import timezone
+
+from .notifications.models import Subscription
+
+logger = logging.getLogger(__name__)
+
+
+TEXT_CROP_LEN = 30
+
+
+def subscribers() -> list[str]:
+    """
+    Returns a list of people subscribed to the post
+    """
+    whatever_new = [
+        email
+        for (email,) in (
+            Subscription.objects.filter(to_new_posts=True)
+            .select_related("user")
+            .values_list("user__email")
+        )
+    ]
+
+    return whatever_new
+
+
+def send_notifications_to(
+    emails_to: Iterable[str], post_text: str, date: datetime.datetime
+):
+    if not emails_to:
+        logger.info("No users to send notifications to.")
+        return
+
+    if len(post_text) < TEXT_CROP_LEN:
+        text = post_text
+    else:
+        text = f"{post_text[:TEXT_CROP_LEN]}..."
+
+    # NOTE: use send_mass_mail here and not a send_mail to send multiple emails
+    # with each having their own target
+    send_mass_mail(
+        map(
+            lambda email: (
+                "Such Subject",
+                f"Hi check out our post update!\n{date}\n{text}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+            ),
+            emails_to,
+        )
+    )
 
 
 class Post(models.Model):
@@ -11,6 +65,26 @@ class Post(models.Model):
 
     def __str__(self) -> str:
         return self.post_text
+
+    def save(self, *args, **kwargs) -> None:
+        # call default impl
+        super().save(*args, **kwargs)
+
+        # hook notifications in
+        self.send_notifications()
+
+    def send_notifications(self) -> None:
+        post_text = self.post_text
+        pub_date = self.pub_date
+
+        if pub_date > timezone.now():
+            # FIXME: delayed posts won't receive any notifications
+            #
+            # not sure how to fix it without some complicated machinery
+            pass
+
+        emails_to = subscribers()
+        send_notifications_to(emails_to, post_text, pub_date)
 
     def was_published_recently(self) -> bool:
         # this is a stupid method, but Django tutorial said that I should
