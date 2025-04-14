@@ -163,6 +163,11 @@ LOGGING = {
             # explicitly set to INFO to ignore its debug tracing
             "level": "INFO",
         },
+        "django.db.backends": {
+            "handlers": ["console", "logfile"],
+            "propagate": False,
+            "level": "DEBUG",
+        },
         "gunicorn": {
             # p. s. gunicorn already has own formatting, let it keep it
             "handlers": ["console_minfmt", "logfile_minfmt"],
