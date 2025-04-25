@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import logging
 from collections.abc import Iterable
@@ -16,25 +18,48 @@ logger = logging.getLogger(__name__)
 TEXT_CROP_LEN = 30
 
 
-def subscribers() -> list[str]:
+def subscriber_emails(post: Post) -> Iterable[str]:
     """
     Returns a list of people subscribed to the post
     """
-    whatever_new = [
-        email
-        for (email,) in (
-            Subscription.objects.filter(to_new_posts=True)
-            .select_related("user")
-            .values_list("user__email")
-        )
-    ]
 
-    return whatever_new
+    # fetch everyone who is subscribed to new posts
+    # WARN: we don't filter new posts vs updates to posts
+    because_new = (
+        Subscription.objects.filter(to_new_posts=True)
+        .select_related("user")
+        .values_list("user")
+    )
+
+    # fetch the intersection of:
+    # - users with engaged_posts enabled
+    # - users who commented on that post
+    query_subscribers = Subscription.objects.filter(
+        to_engaged_posts=True
+    ).values_list("user")
+    # WARN: we don't filter whether the update is because of subscriber
+    # comment
+    query_commenters = Comment.objects.filter(post_id=post.id).values_list(
+        "commenter"
+    )
+    because_engaged = query_subscribers.intersection(query_commenters)
+
+    # get emails
+    subscribers = because_new.union(because_engaged)
+
+    # NOTE: this whole function is one single DB query, yay
+    return User.objects.filter(id__in=subscribers).values_list(
+        "email", flat=True
+    )
 
 
 def send_notifications_to(
     emails_to: Iterable[str], post_text: str, date: datetime.datetime
 ):
+    """
+    Sends post notifications
+    """
+
     if not emails_to:
         logger.info("No users to send notifications to.")
         return
@@ -83,7 +108,7 @@ class Post(models.Model):
             # not sure how to fix it without some complicated machinery
             pass
 
-        emails_to = subscribers()
+        emails_to = subscriber_emails(self)
         send_notifications_to(emails_to, post_text, pub_date)
 
     def was_published_recently(self) -> bool:
@@ -113,7 +138,8 @@ class Comment(models.Model):
     comment_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField("publishing date")
 
-    commenter_ip = models.GenericIPAddressField(null=True)
+    # blank=True to mark as optional in Django Admin
+    commenter_ip = models.GenericIPAddressField(null=True, blank=True)
     commenter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def __str__(self) -> str:
