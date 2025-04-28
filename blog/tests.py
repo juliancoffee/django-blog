@@ -6,8 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .easter import PredictionGenerator
 from .models import Post
+from .utils.easter_egg import PredictionGenerator
 
 # Create your tests here
 

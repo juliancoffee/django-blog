@@ -2,20 +2,19 @@ import logging
 import pprint
 
 from django.contrib.auth.decorators import login_not_required
-from django.http import (
-    HttpResponse,
-    HttpResponseRedirect,
-)
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
-from blog.utils import get_user_ip, test_with
+from mysite.utils.testing import test_with
 
 from .forms import CommentForm
 from .models import Post
+from .utils import get_user_ip
+from .utils.testing import random_post_ids
 
 logger = logging.getLogger()
 
@@ -36,16 +35,6 @@ def index(request) -> HttpResponse:
     )
     context = {"post_list": posts}
     return render(request, "blog/index.html", context)
-
-
-def random_post_ids() -> list[tuple[int]]:
-    # NOTE: it's must be a tuple
-    #
-    # Also, it doesn't really matter what we put here, because during tests
-    # we have no posts and we'd get 404 in any case.
-    random_post_id = (22,)
-
-    return [random_post_id]
 
 
 @login_not_required

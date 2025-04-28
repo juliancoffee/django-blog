@@ -1,16 +1,12 @@
 import os
 
 from django.conf import settings
-from django.contrib.auth.decorators import user_passes_test
-from django.http import (
-    HttpResponse,
-)
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 from django.shortcuts import render
 
-from blog.utils import user_is_staff_check
 
-
-@user_passes_test(user_is_staff_check)
+@staff_member_required
 def spylog(request) -> HttpResponse:
     # NOTE: idk where we should block requests here or in urlconfig?
     #
