@@ -10,9 +10,9 @@ urlpatterns = [
     re_path("^$|^index/", blog.views.index, name="index"),
     path("<int:post_id>/", blog.views.detail, name="detail"),
     path(
-        "<int:post_id>/comment/",
+        "<int:post_id>/handle_comment/",
         blog.views.CommentView.as_view(),
-        name="comment",
+        name="handle_comment",
     ),
     # auth
     path("accounts/", include("blog.accounts.urls")),

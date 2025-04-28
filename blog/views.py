@@ -1,10 +1,11 @@
 import logging
 import pprint
+from collections.abc import Sequence
+from typing import Any, TypedDict, override
 
 from django.contrib.auth.decorators import login_not_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
@@ -12,7 +13,7 @@ from django.views.generic.edit import FormView
 from mysite.utils.testing import test_with
 
 from .forms import CommentForm
-from .models import Post
+from .models import Comment, Post
 from .utils import get_user_ip
 from .utils.testing import random_post_ids
 
@@ -37,32 +38,37 @@ def index(request) -> HttpResponse:
     return render(request, "blog/index.html", context)
 
 
+class CommentDetail(TypedDict):
+    author_username: str
+    comment_text: str
+
+
+def comment_data(post_id: int) -> Sequence[CommentDetail]:
+    # eagerly evaluate to control when it runs
+    return [
+        {
+            "author_username": username,
+            "comment_text": comment_text,
+        }
+        for (
+            username,
+            comment_text,
+        ) in Comment.objects.filter(post_id=post_id)
+        .order_by("pub_date")
+        .values_list("commenter__username", "comment_text")
+    ]
+
+
 @login_not_required
 @test_with(random_post_ids)
 def detail(request, post_id: int) -> HttpResponse:
-    # NOTE: We do two SQL queries, one to get the post, another to get the
-    # comments.
-    # We could in theory, first get all the comments for this post, and then
-    # select_related("post") and do a JOIN, which would result in us doing just
-    # one query.
-    # Would it be faster? Probably ...?
-    # It would consume much more memory though, because we'd duplicate the post
-    # each time, and posts contain text, which makes them kinda heavy.
-    # 200 characters = 200 bytes.
-    # Now multiply it by number of comments.
-    #
-    # Probably doesn't matter either way at this scale, so we're just letting
-    # Django do it's thing and issue two queries.
-    #
-    # P. S. I think I saw more than two queries with Django Debug Toolbar.
-    # I don't want to look into it right now though.
-    p = get_object_or_404(Post, pk=post_id)
+    post = get_object_or_404(Post, pk=post_id)
     return render(
         request,
         "blog/detail.html",
         {
-            "post": p,
-            "comments": p.comment_set.all(),
+            "post": post,
+            "comments": comment_data(post_id),
             "form": CommentForm(),
         },
     )
@@ -71,32 +77,60 @@ def detail(request, post_id: int) -> HttpResponse:
 @method_decorator(login_not_required, name="dispatch")
 @method_decorator(test_with(random_post_ids), name="dispatch")
 class CommentView(FormView):
-    template_name = "blog/detail.html"
+    """
+    Handles dynamic comment submissions
+    """
+
+    template_name = "blog/comment_list_fragment.html"
     form_class = CommentForm
     http_method_names = ["post"]
 
+    @override
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        """
+        Insert the form and template arguments into context
+        """
+        context = super().get_context_data(**kwargs)
+        # NOTE: only self.kwargs guarantees to store query params
+        post_id = self.kwargs["post_id"]
+
+        context["post"] = {"id": post_id}
+        context["comments"] = comment_data(post_id)
+        return context
+
+    @override
     def form_invalid(self, form):
+        """
+        Return back the comment list and the form with errors
+        """
         form_data = self.request.POST.dict()
         logger.error(f"Couldn't find comment in the form: POST={pf(form_data)}")
 
-        return super().form_invalid(form)
+        context = self.get_context_data(**self.kwargs)
+        return self.render_to_response(context=context)
 
+    @override
     def form_valid(self, form):
-        post_id: int = self.kwargs["post_id"]
-        p = get_object_or_404(Post, pk=post_id)
+        """
+        Create a new comment and render the new comment list
+        """
+        post_id = self.kwargs["post_id"]
 
-        comment = form.cleaned_data["comment"]
         user = self.request.user if self.request.user.is_authenticated else None
 
-        p.comment_set.create(
-            comment_text=comment,
+        # INFO:
+        # Using this and not `Post.get(pk=post).comment_set` to avoid separate
+        # query
+        comment = Comment(
+            post_id=post_id,
+            comment_text=form.cleaned_data["comment"],
             pub_date=timezone.now(),
             commenter=user,
             commenter_ip=get_user_ip(self.request),
         )
-        # Always return an HttpResponseRedirect after successfully dealing
-        # with POST data. This prevents data from being posted twice if a
-        # user hits the Back button.
-        #
-        # ^ source: Django Docs, Tutorial part 4
-        return HttpResponseRedirect(reverse("blog:detail", args=(post_id,)))
+        comment.save()
+
+        # re-fetch comments and render the _new_ form
+        context = self.get_context_data(**self.kwargs)
+        context["form"] = self.form_class()
+        return self.render_to_response(context=context)
