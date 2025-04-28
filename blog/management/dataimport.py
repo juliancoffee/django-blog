@@ -9,9 +9,9 @@ from django.http import HttpRequest
 from pydantic import BaseModel, ValidationError
 
 from blog.models import Post
+from mysite.utils import Result
 
 from .forms import ImportDataForm
-from .utils import Result
 
 logger = logging.getLogger(__name__)
 

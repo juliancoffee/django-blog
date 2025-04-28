@@ -1,9 +1,7 @@
 import logging
 import pprint
-from collections.abc import Callable, Sequence
-from typing import TypeVar
+from collections.abc import Sequence
 
-from django.contrib.auth.models import AnonymousUser, User
 from django.http import (
     HttpRequest,
 )
@@ -11,32 +9,6 @@ from django.views.debug import SafeExceptionReporterFilter
 
 logger = logging.getLogger(__name__)
 pf = pprint.pformat
-
-
-F = TypeVar("F")
-TestProvider = Callable[[], list[tuple]]
-
-
-def test_with(test_provider: TestProvider) -> Callable[[F], F]:
-    def decorator(view_func):
-        view_func.test_provider = test_provider  # type: ignore
-        return view_func
-
-    return decorator
-
-
-# We know that all users are authorized, because of LoginRequiredMiddleware
-#
-# I'm not sure I like the fact that it is so implicit and can't be inferred
-# from the function body, but whatever.
-#
-# Also I don't like that fact that our authentication check is automatic,
-# but our authorization check can be ignored.
-#
-# Of course, you can't automate authorization, but can't we at least have
-# some catch-all check that forbids every request, unless configured?
-def user_is_staff_check(user: User | AnonymousUser) -> bool:
-    return user.is_staff
 
 
 def get_user_ip(request: HttpRequest):

@@ -3,31 +3,22 @@ import json
 import logging
 from typing import Any, Optional
 
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
-from blog.utils import user_is_staff_check
-
 from .dataexport import get_all_data
-from .dataimport import (
-    Data as ImportData,
-)
-from .dataimport import (
-    DataError,
-    FormError,
-    data_from,
-    load_all_data_in,
-)
+from .dataimport import Data as ImportData
+from .dataimport import DataError, FormError, data_from, load_all_data_in
 from .forms import ExportDataForm, ImportDataForm
 
 logger = logging.getLogger(__name__)
 
 
 # Create your views here.
-@user_passes_test(user_is_staff_check)
+@staff_member_required
 def data_console(request: HttpRequest) -> HttpResponse:
     import_form = ImportDataForm()
     export_form = ExportDataForm()
@@ -50,7 +41,7 @@ def data_console(request: HttpRequest) -> HttpResponse:
 # check authentication and authorization server-side.
 # - If you visit this page with something like a `curl`, you simply won't pass
 # auth.
-@user_passes_test(user_is_staff_check)
+@staff_member_required
 @require_GET
 def download_exported_file(request: HttpRequest) -> HttpResponse | FileResponse:
     # TODO: this should probably have some filtering and stuff, because we're
@@ -74,7 +65,7 @@ def download_exported_file(request: HttpRequest) -> HttpResponse | FileResponse:
     )
 
 
-@user_passes_test(user_is_staff_check)
+@staff_member_required
 @require_POST
 def handle_import_preview(request: HttpRequest) -> HttpResponse:
     data: Optional[ImportData] = None
@@ -103,7 +94,7 @@ def handle_import_preview(request: HttpRequest) -> HttpResponse:
     )
 
 
-@user_passes_test(user_is_staff_check)
+@staff_member_required
 @require_POST
 def handle_import(request: HttpRequest) -> HttpResponse:
     try:
