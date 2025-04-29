@@ -1,18 +1,20 @@
 import logging
 import pprint
 from collections.abc import Sequence
+from typing import Final
 
-from django.http import (
-    HttpRequest,
-)
+from django.http import HttpRequest
 from django.views.debug import SafeExceptionReporterFilter
 
 logger = logging.getLogger(__name__)
 pf = pprint.pformat
 
+# max length in "characters", where character _probably_ means u32 codepoint
+MAX_COMMENT_LENGTH: Final[int] = 1000
+
 
 def get_user_ip(request: HttpRequest):
-    """Get user ip from HTTP_X_FORWARDED_FOR header
+    """Get user ip from `HTTP_X_FORWARDED_FOR` header
 
     If no such header found or unable to parse it, returns None.
     """

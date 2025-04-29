@@ -41,6 +41,7 @@ def index(request) -> HttpResponse:
 class CommentDetail(TypedDict):
     author_username: str
     comment_text: str
+    is_multiline: bool
 
 
 def comment_data(post_id: int) -> Sequence[CommentDetail]:
@@ -49,6 +50,7 @@ def comment_data(post_id: int) -> Sequence[CommentDetail]:
         {
             "author_username": username,
             "comment_text": comment_text,
+            "is_multiline": "\n" in comment_text,
         }
         for (
             username,

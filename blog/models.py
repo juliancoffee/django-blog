@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 from collections.abc import Iterable
+from typing import override
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -10,7 +11,9 @@ from django.core.mail import send_mass_mail
 from django.db import models
 from django.utils import timezone
 
-from .notifications.models import Subscription
+from blog.notifications.models import Subscription
+
+from .utils import MAX_COMMENT_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -88,9 +91,11 @@ class Post(models.Model):
     post_text = models.CharField(max_length=500)
     pub_date = models.DateTimeField("publishing date")
 
+    @override
     def __str__(self) -> str:
         return self.post_text
 
+    @override
     def save(self, *args, **kwargs) -> None:
         # call default impl
         super().save(*args, **kwargs)
@@ -135,12 +140,13 @@ class Post(models.Model):
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    comment_text = models.CharField(max_length=200)
+    comment_text = models.CharField(max_length=MAX_COMMENT_LENGTH)
     pub_date = models.DateTimeField("publishing date")
 
     # blank=True to mark as optional in Django Admin
     commenter_ip = models.GenericIPAddressField(null=True, blank=True)
     commenter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
+    @override
     def __str__(self) -> str:
         return self.comment_text
