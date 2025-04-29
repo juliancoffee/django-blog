@@ -3,7 +3,13 @@
     --red: #662b2b;
 }
 
-h1, a, li, p, pre, span, form label {
+h1,
+a,
+li,
+p,
+pre,
+span,
+form label {
     background: var(--pink);
 }
 
@@ -40,8 +46,18 @@ body {
     align-items: center;
 }
 
-.list-form input[type="submit"], button {
+.list-form input[type="submit"],
+button {
     background: white;
+}
+
+.column-form {
+    /*
+     * like list-form, but without center alignment
+     */
+    display: flex;
+    flex-direction: column;
+    max-width: 30%;
 }
 
 header {

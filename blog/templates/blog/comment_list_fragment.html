@@ -5,12 +5,18 @@
         <ul>
             {% for comment in comments %}
                 <li>
+                    <!-- commenter name -->
                     {% if comment.author_username %}
                         [{{ comment.author_username }}]
                     {% else %}
                         [unknown]
                     {% endif %}
-                    {{ comment.comment_text }}
+                    <!-- comment text itself -->
+                    {% if comment.is_multiline %}
+                        <pre>{{ comment.comment_text }}</pre>
+                    {% else %}
+                        {{ comment.comment_text }}
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>
@@ -23,6 +29,7 @@
     {% endif %}
 
     <form
+        class="column-form"
         id="comment-form"
         hx-post="{% url 'blog:handle_comment' post.id %}"
         hx-target="#comments"

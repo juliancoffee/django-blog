@@ -1,5 +1,7 @@
 from django import forms
 
+from .utils import MAX_COMMENT_LENGTH
+
 
 class CommentForm(forms.Form):
     # I wonder how max_length will interact with comment_text's length in db.
@@ -8,4 +10,6 @@ class CommentForm(forms.Form):
     #
     # NOTE: unless you explicitly empty the label,
     # Django will generate it for you.
-    comment = forms.CharField(max_length=200, label="")
+    comment = forms.CharField(
+        widget=forms.Textarea, max_length=MAX_COMMENT_LENGTH, label=""
+    )
