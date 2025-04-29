@@ -3,6 +3,7 @@ import pprint
 from collections.abc import Sequence
 from typing import Any, TypedDict, override
 
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_not_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -12,9 +13,9 @@ from django.views.generic.edit import FormView
 
 from mysite.utils.testing import test_with
 
-from .forms import CommentForm
+from .forms import CommentForm, PostForm
 from .models import Comment, Post
-from .utils import get_user_ip
+from .utils import get_user_ip, safe_pf
 from .utils.testing import random_post_ids
 
 logger = logging.getLogger()
@@ -22,20 +23,88 @@ logger = logging.getLogger()
 pf = pprint.pformat
 
 
+class PostDetail(TypedDict):
+    id: int
+    post_text: str
+    is_multiline: bool
+
+
+def post_data() -> Sequence[PostDetail]:
+    return [
+        {
+            "id": post_id,
+            "post_text": post_text,
+            "is_multiline": "\n" in post_text,
+        }
+        for post_id, post_text in Post.objects.filter(
+            # only show posts that already have been published
+            # i. e. ones with pub_date less than or equal to 'now'
+            pub_date__lte=timezone.now()
+        )
+        .order_by("-pub_date")
+        .values_list("id", "post_text")
+    ]
+
+
 # Create your views here.
 @login_not_required
 def index(request) -> HttpResponse:
-    # only show posts that already have been published
-    # i. e. ones with pub_date less than or equal to 'now'
-    #
-    # p. s. that's the weirdest ORM syntax I've ever seen (not that I've seen
-    # many)
-    # p. p. s and of course, mypy can't catch any mistakes here, that sucks
-    posts = Post.objects.filter(pub_date__lte=timezone.now()).order_by(
-        "-pub_date"
-    )
-    context = {"post_list": posts}
+    context = {
+        "posts": post_data(),
+        "form": PostForm() if request.user.is_staff else None,
+    }
     return render(request, "blog/index.html", context)
+
+
+@method_decorator(staff_member_required, name="dispatch")
+class PostView(FormView):
+    """
+    Handles dynamic post submissions
+    """
+
+    template_name = "blog/post_list_fragment.html"
+    form_class = PostForm
+    http_method_names = ["post"]
+
+    @override
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        """
+        Insert the form and template arguments into context
+        """
+        context = super().get_context_data(**kwargs)
+
+        context["posts"] = post_data()
+        return context
+
+    @override
+    def form_invalid(self, form):
+        """
+        Return back the post list and the form with errors
+        """
+        form_data = self.request.POST.dict()
+        logger.error(
+            f"Couldn't find post in the form: POST={safe_pf(form_data)}"
+        )
+
+        context = self.get_context_data(**self.kwargs)
+        return self.render_to_response(context=context)
+
+    @override
+    def form_valid(self, form) -> HttpResponse:
+        """
+        Create a new post and render the new post list
+        """
+        text = form.cleaned_data["post"]
+        date = timezone.now()
+
+        # create the post
+        post = Post(post_text=text, pub_date=date)
+        post.save()
+
+        # re-fetch comments and render the _new_ form
+        context = self.get_context_data(**self.kwargs)
+        context["form"] = self.form_class()
+        return self.render_to_response(context=context)
 
 
 class CommentDetail(TypedDict):
@@ -106,7 +175,9 @@ class CommentView(FormView):
         Return back the comment list and the form with errors
         """
         form_data = self.request.POST.dict()
-        logger.error(f"Couldn't find comment in the form: POST={pf(form_data)}")
+        logger.error(
+            f"Couldn't find comment in the form: POST={safe_pf(form_data)}"
+        )
 
         context = self.get_context_data(**self.kwargs)
         return self.render_to_response(context=context)

@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from blog.notifications.models import Subscription
 
-from .utils import MAX_COMMENT_LENGTH
+from .utils import MAX_COMMENT_LENGTH, MAX_POST_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def send_notifications_to(
 
 
 class Post(models.Model):
-    post_text = models.CharField(max_length=500)
+    post_text = models.CharField(max_length=MAX_POST_LENGTH)
     pub_date = models.DateTimeField("publishing date")
 
     @override

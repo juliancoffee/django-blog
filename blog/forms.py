@@ -1,6 +1,6 @@
 from django import forms
 
-from .utils import MAX_COMMENT_LENGTH
+from .utils import MAX_COMMENT_LENGTH, MAX_POST_LENGTH
 
 
 class CommentForm(forms.Form):
@@ -12,4 +12,10 @@ class CommentForm(forms.Form):
     # Django will generate it for you.
     comment = forms.CharField(
         widget=forms.Textarea, max_length=MAX_COMMENT_LENGTH, label=""
+    )
+
+
+class PostForm(forms.Form):
+    post = forms.CharField(
+        widget=forms.Textarea, max_length=MAX_POST_LENGTH, label=""
     )
