@@ -1,0 +1,47 @@
+{# for use with htmx, not a full document #}
+
+<div id="posts">
+    {% if form %}
+        <div id="post-form">
+            {% if form.errors %}
+                {{ form.errors }}
+            {% endif %}
+
+            <form
+                class='column-form'
+                hx-post="{% url 'blog:handle_post' %}"
+                hx-target="#posts"
+            >
+                {% csrf_token %}
+
+                {% for field in form %}
+                    {# move errors to top level #}
+                    {{ field }}
+                {% endfor %}
+
+                <input type="submit" value="Meow!">
+            </form>
+        </div>
+    {% endif %}
+
+    {% if posts %}
+        <ul>
+            {% for post in posts %}
+                <li>
+                    {% if post.is_multiline %}
+                        <pre>{{ post.post_text }}</pre>
+                        <a href="{% url 'blog:detail' post.id %}">
+                            More...
+                        </a>
+                    {% else %}
+                        <a href="{% url 'blog:detail' post.id %}">
+                            {{ post.post_text }}
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nothing to see here. Yet 👀<p>
+    {% endif %}
+</div>
