@@ -26,7 +26,6 @@ pf = pprint.pformat
 class PostDetail(TypedDict):
     id: int
     post_text: str
-    is_multiline: bool
 
 
 def post_data() -> Sequence[PostDetail]:
@@ -34,7 +33,6 @@ def post_data() -> Sequence[PostDetail]:
         {
             "id": post_id,
             "post_text": post_text,
-            "is_multiline": "\n" in post_text,
         }
         for post_id, post_text in Post.objects.filter(
             # only show posts that already have been published
@@ -110,7 +108,6 @@ class PostView(FormView):
 class CommentDetail(TypedDict):
     author_username: str
     comment_text: str
-    is_multiline: bool
 
 
 def comment_data(post_id: int) -> Sequence[CommentDetail]:
@@ -119,7 +116,6 @@ def comment_data(post_id: int) -> Sequence[CommentDetail]:
         {
             "author_username": username,
             "comment_text": comment_text,
-            "is_multiline": "\n" in comment_text,
         }
         for (
             username,

@@ -1,4 +1,5 @@
 {# for use with htmx, not a full document #}
+{% load str_extras %}
 
 <div id="posts">
     {% if form %}
@@ -28,7 +29,7 @@
         <ul>
             {% for post in posts %}
                 <li>
-                    {% if post.is_multiline %}
+                    {% if post.post_text|is_multiline %}
                         <pre>{{ post.post_text }}</pre>
                         <a href="{% url 'blog:detail' post.id %}">
                             More...

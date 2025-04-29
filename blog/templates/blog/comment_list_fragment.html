@@ -1,4 +1,5 @@
 {# for use with htmx, not a full document #}
+{% load str_extras %}
 
 <div id="comments">
     {% if comments %}
@@ -12,7 +13,7 @@
                         [unknown]
                     {% endif %}
                     <!-- comment text itself -->
-                    {% if comment.is_multiline %}
+                    {% if comment.comment_text|is_multiline %}
                         <pre>{{ comment.comment_text }}</pre>
                     {% else %}
                         {{ comment.comment_text }}
