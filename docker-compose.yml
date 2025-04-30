@@ -16,6 +16,8 @@ services:
     build: .
     ports:
       - 8000:8000
+      # debugger port
+      - 5678:5678
     # yes, yes, I should use secret files instead, but not now
     environment:
       - SECRET_KEY=${SECRET_KEY}

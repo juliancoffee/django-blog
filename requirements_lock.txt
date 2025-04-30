@@ -3,9 +3,13 @@
 annotated-types==0.7.0 \
     --hash=sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53 \
     --hash=sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89
+    # via pydantic
 asgiref==3.8.1 \
     --hash=sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47 \
     --hash=sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590
+    # via
+    #   django
+    #   django-stubs
 brotli==1.1.0 \
     --hash=sha256:316cc9b17edf613ac76b1f1f305d2a748f1b976b033b049a6ecdfd5612c70409 \
     --hash=sha256:32d95b80260d79926f5fab3c41701dbb818fde1c9da590e77e571eefd14abe28 \
@@ -38,9 +42,27 @@ brotli==1.1.0 \
     --hash=sha256:d487f5432bf35b60ed625d7e1b448e2dc855422e87469e3f450aa5552b0eb284 \
     --hash=sha256:e79e6520141d792237c70bcd7a3b122d00f2613769ae0cb61c52e89fd3443839 \
     --hash=sha256:f0db75f47be8b8abc8d9e31bc7aad0547ca26f24a54e6fd10231d623f183d089
+    # via whitenoise
+debugpy==1.8.14 \
+    --hash=sha256:0f920c7f9af409d90f5fd26e313e119d908b0dd2952c2393cd3247a462331f15 \
+    --hash=sha256:281d44d248a0e1791ad0eafdbbd2912ff0de9eec48022a5bfbc332957487ed3f \
+    --hash=sha256:329a15d0660ee09fec6786acdb6e0443d595f64f5d096fc3e3ccf09a4259033f \
+    --hash=sha256:3784ec6e8600c66cbdd4ca2726c72d8ca781e94bce2f396cc606d458146f8f4e \
+    --hash=sha256:5aa56ef8538893e4502a7d79047fe39b1dae08d9ae257074c6464a7b290b806f \
+    --hash=sha256:5cd9a579d553b6cb9759a7908a41988ee6280b961f24f63336835d9418216a20 \
+    --hash=sha256:684eaf43c95a3ec39a96f1f5195a7ff3d4144e4a18d69bb66beeb1a6de605d6e \
+    --hash=sha256:7cd287184318416850aa8b60ac90105837bb1e59531898c07569d197d2ed5322 \
+    --hash=sha256:8899c17920d089cfa23e6005ad9f22582fd86f144b23acb9feeda59e84405b84 \
+    --hash=sha256:f6bb5c0dcf80ad5dbc7b7d6eac484e2af34bdacdf81df09b6a3e62792b722826
+    # via django-blog
 django==5.1.3 \
     --hash=sha256:8b38a9a12da3ae00cb0ba72da985ec4b14de6345046b1e174b1fd7254398f818 \
     --hash=sha256:c0fa0e619c39325a169208caef234f90baa925227032ad3f44842ba14d75234a
+    # via
+    #   django-blog
+    #   django-debug-toolbar
+    #   django-stubs
+    #   django-stubs-ext
 django-debug-toolbar==4.4.6 \
     --hash=sha256:36e421cb908c2f0675e07f9f41e3d1d8618dc386392ec82d23bcfcd5d29c7044 \
     --hash=sha256:3beb671c9ec44ffb817fad2780667f172bd1c067dbcabad6268ce39a81335f45
@@ -50,9 +72,11 @@ django-stubs==5.1.1 \
 django-stubs-ext==5.1.1 \
     --hash=sha256:3907f99e178c93323e2ce908aef8352adb8c047605161f8d9e5e7b4efb5a6a9c \
     --hash=sha256:db7364e4f50ae7e5360993dbd58a3a57ea4b2e7e5bab0fbd525ccdb3e7975d1c
+    # via django-stubs
 gunicorn==23.0.0 \
     --hash=sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d \
     --hash=sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec
+    # via django-blog
 mypy==1.13.0 \
     --hash=sha256:0291a61b6fbf3e6673e3405cfcc0e7650bebc7939659fdca2702958038bd835e \
     --hash=sha256:164f28cb9d6367439031f4c81e84d3ccaa1e19232d9d05d37cb0bd880d3f93c2 \
@@ -66,15 +90,19 @@ mypy==1.13.0 \
     --hash=sha256:a4c1bfcdbce96ff5d96fc9b08e3831acb30dc44ab02671eca5953eadad07d6d0 \
     --hash=sha256:a7b44178c9760ce1a43f544e595d35ed61ac2c3de306599fa59b38a6048e1aa7 \
     --hash=sha256:de2904956dac40ced10931ac967ae63c5089bd498542194b436eb097a9f77bc8
+    # via django-stubs
 mypy-extensions==1.0.0 \
     --hash=sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d \
     --hash=sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782
+    # via mypy
 packaging==24.2 \
     --hash=sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759 \
     --hash=sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f
+    # via gunicorn
 psycopg==3.2.3 \
     --hash=sha256:644d3973fe26908c73d4be746074f6e5224b03c1101d302d9a53bf565ad64907 \
     --hash=sha256:a5764f67c27bec8bfac85764d23c534af2c27b893550377e37ce59c12aac47a2
+    # via django-blog
 psycopg-binary==3.2.3 ; implementation_name != 'pypy' \
     --hash=sha256:0463a11b1cace5a6aeffaf167920707b912b8986a9c7920341c75e3686277920 \
     --hash=sha256:07d019a786eb020c0f984691aa1b994cb79430061065a694cf6f94056c603d26 \
@@ -98,9 +126,11 @@ psycopg-binary==3.2.3 ; implementation_name != 'pypy' \
     --hash=sha256:e90352d7b610b4693fad0feea48549d4315d10f1eba5605421c92bb834e90170 \
     --hash=sha256:fa33ead69ed133210d96af0c63448b1385df48b9c0247eda735c5896b9e6dbbf \
     --hash=sha256:fd65774ed7d65101b314808b6893e1a75b7664f680c3ef18d2e5c84d570fa393
+    # via psycopg
 pydantic==2.10.6 \
     --hash=sha256:427d664bf0b8a2b34ff5dd0f5a18df00591adcee7198fbd71981054cef37b584 \
     --hash=sha256:ca5daa827cce33de7a42be142548b0096bf05a7e7b365aebfa5f8eeec7128236
+    # via django-blog
 pydantic-core==2.27.2 \
     --hash=sha256:05e3a55d124407fffba0dd6b0c0cd056d10e983ceb4e5dbd10dda135c31071d6 \
     --hash=sha256:172fce187655fece0c90d90a678424b013f8fbb0ca8b036ac266749c09438cb7 \
@@ -131,9 +161,11 @@ pydantic-core==2.27.2 \
     --hash=sha256:eb026e5a4c1fee05726072337ff51d1efb6f59090b7da90d30ea58625b1ffb39 \
     --hash=sha256:eda3f5c2a021bbc5d976107bb302e0131351c2ba54343f8a496dc8783d3d3a6a \
     --hash=sha256:fa8e459d4954f608fa26116118bb67f56b93b209c39b008277ace29937453dc9
+    # via pydantic
 python-dotenv==1.0.1 \
     --hash=sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca \
     --hash=sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a
+    # via django-blog
 ruff==0.8.0 \
     --hash=sha256:0e55cce9aa93c5d0d4e3937e47b169035c7e91c8655b0974e61bb79cf398d49c \
     --hash=sha256:295bb4c02d58ff2ef4378a1870c20af30723013f441c9d1637a008baaf928c8b \
@@ -156,18 +188,34 @@ ruff==0.8.0 \
 sqlparse==0.5.2 \
     --hash=sha256:9e37b35e16d1cc652a2545f0997c1deb23ea28fa1f3eefe609eee3063c3b105f \
     --hash=sha256:e99bc85c78160918c3e1d9230834ab8d80fc06c59d03f8db2618f65f65dda55e
+    # via
+    #   django
+    #   django-debug-toolbar
 types-pyyaml==6.0.12.20241230 \
     --hash=sha256:7f07622dbd34bb9c8b264fe860a17e0efcad00d50b5f27e93984909d9363498c \
     --hash=sha256:fa4d32565219b68e6dee5f67534c722e53c00d1cfc09c435ef04d7353e1e96e6
+    # via django-stubs
 typing-extensions==4.12.2 \
     --hash=sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d \
     --hash=sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8
+    # via
+    #   django-stubs
+    #   django-stubs-ext
+    #   mypy
+    #   psycopg
+    #   pydantic
+    #   pydantic-core
 tzdata==2024.2 ; sys_platform == 'win32' \
     --hash=sha256:7d85cc416e9382e69095b7bdf4afd9e3880418a2413feec7069d533d6b4e31cc \
     --hash=sha256:a48093786cdcde33cad18c2555e8532f34422074448fbc874186f0abd79565cd
+    # via
+    #   django
+    #   psycopg
 verbose-csrf-middleware==1.0.4 \
     --hash=sha256:1a8b5930b7069b4946d63adab19293422c2515578fa7d84b0b49ca5776bbfcb8 \
     --hash=sha256:778901ab1845b8a7c8db204b90b0db8fc74752ee58c3605603e2f02a113a04da
+    # via django-blog
 whitenoise==6.8.2 \
     --hash=sha256:486bd7267a375fa9650b136daaec156ac572971acc8bf99add90817a530dd1d4 \
     --hash=sha256:df12dce147a043d1956d81d288c6f0044147c6d2ab9726e5772ac50fb45d2280
+    # via django-blog
