@@ -103,6 +103,10 @@ class Post(models.Model):
         # hook notifications in
         self.send_notifications()
 
+    @staticmethod
+    def create_now(post_text: str) -> Post:
+        return Post.objects.create(post_text=post_text, pub_date=timezone.now())
+
     def send_notifications(self) -> None:
         post_text = self.post_text
         pub_date = self.pub_date
