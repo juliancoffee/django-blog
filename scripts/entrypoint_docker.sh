@@ -21,7 +21,7 @@ export DEBUG=1
 # I want to have DEVMODE separate from DEBUG in cases when I need to reproduce
 # something in release version, and they might be slightly different
 export DEVMODE=1
-# export DEBUGPY=1
+export DEBUGPY=1
 
 #export CONSOLE_LOG_LEVEL=INFO # default is DEBUG
 export PYLOG_LEVEL=DEBUG # default is INFO
@@ -40,7 +40,7 @@ if [ "$DEBUGPY" ]
 then
     exec python \
         -Xfrozen_modules=off \
-        -m debugpy --wait-for-client --listen 0.0.0.0:5678 \
+        -m debugpy --listen 0.0.0.0:5678 \
         manage.py runserver 0.0.0.0:8000 --noreload --nothreading
 else
     exec python manage.py runserver 0.0.0.0:8000
