@@ -38,6 +38,10 @@ class PostIndexViewTests(TestCase):
         #
         # p. p. p. s, I like this line much more than previous one, but
         # god it's looking into implementation so much
+        #
+        # UPD: me from the future, yes, I needed to update this line
+        # because I renamed the context variable.
+        # That's the complexity of testing job, I guess.
         self.assertQuerySetEqual(response.context["posts"], [])
 
     def test_past_post(self):
