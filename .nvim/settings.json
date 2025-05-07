@@ -1,0 +1,4 @@
+{
+    "DJANGO_SETTINGS_MODULE": "mysite.settings",
+    "neotest_runner": "django"
+}
