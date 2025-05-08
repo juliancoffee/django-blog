@@ -4,6 +4,7 @@
 # well, almost
 #
 import logging
+from typing import override
 
 from django.contrib.auth.models import User
 from django.core import mail
@@ -20,6 +21,7 @@ logging.disable()
 
 
 class SubscriptionModelTests(TestCase):
+    @override
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser",
@@ -76,6 +78,7 @@ class SubscribeFormTests(TestCase):
 
 
 class NotificationViewsTests(TestCase):
+    @override
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
@@ -172,6 +175,7 @@ class NotificationViewsTests(TestCase):
 
 
 class IntegrationTests(TestCase):
+    @override
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
@@ -222,12 +226,12 @@ class IntegrationTests(TestCase):
 
 
 @override_settings(
-    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
     DEFAULT_FROM_EMAIL="test@example.com",
 )
 class NotificationEmailTests(TestCase):
     """Test email notifications sent when posts are created or updated."""
 
+    @override
     def setUp(self):
         """Set up test data."""
         # Subscribers to new posts

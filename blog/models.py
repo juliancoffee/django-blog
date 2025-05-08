@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from typing import override
 
 from django.conf import settings
@@ -18,10 +18,14 @@ from .utils import MAX_COMMENT_LENGTH, MAX_POST_LENGTH
 logger = logging.getLogger(__name__)
 
 
+type EmailStr = str
+type Username = str
+type UserId = int
+type NotificationInfo = tuple[EmailStr, Username, UserId]
 TEXT_CROP_LEN = 30
 
 
-def subscriber_emails(post: Post) -> Iterable[str]:
+def subscriber_emails(post: Post) -> Iterable[NotificationInfo]:
     """
     Returns a list of people subscribed to the post
     """
@@ -52,12 +56,14 @@ def subscriber_emails(post: Post) -> Iterable[str]:
 
     # NOTE: this whole function is one single DB query, yay
     return User.objects.filter(id__in=subscribers).values_list(
-        "email", flat=True
+        "email", "username", "id"
     )
 
 
 def send_notifications_to(
-    emails_to: Iterable[str], post_text: str, date: datetime.datetime
+    emails_to: Iterable[NotificationInfo],
+    post_text: str,
+    date: datetime.datetime,
 ):
     """
     Sends post notifications
@@ -72,19 +78,30 @@ def send_notifications_to(
     else:
         text = f"{post_text[:TEXT_CROP_LEN]}..."
 
+    def filter_emails(
+        emails_to: Iterable[NotificationInfo],
+    ) -> Iterator[tuple[str, str, EmailStr, list[EmailStr]]]:
+        """
+        `filter_map` to output email message and filter out empty emails
+        """
+        for email, username, user_id in emails_to:
+            if email:
+                yield (
+                    "Such Subject",
+                    f"Hi, {username}, check out our post update!\n{date}\n{text}",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                )
+            else:
+                logger.error(
+                    f"Attempted to send an email to user {username} {user_id=}"
+                    " but we don't know their email"
+                )
+                pass
+
     # NOTE: use send_mass_mail here and not a send_mail to send multiple emails
     # with each having their own target
-    send_mass_mail(
-        map(
-            lambda email: (
-                "Such Subject",
-                f"Hi check out our post update!\n{date}\n{text}",
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-            ),
-            emails_to,
-        )
-    )
+    send_mass_mail(filter_emails(emails_to))
 
 
 class Post(models.Model):
