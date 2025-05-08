@@ -6,33 +6,6 @@
     <em> Written: {{ post.pub_date }} </em>
 <span>
 
-{% if error %}
-    <h1> Error: {{ form.error }}</h1>
-{% endif %}
-{% if comments %}
-    <ul>
-        {% for comment in comments %}
-            <li>
-                {% if comment.commenter %}
-                    [{{ comment.commenter.username }}]
-                {% else %}
-                    [unknown]
-                {% endif %}
-                {{ comment.comment_text }}
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No comments yet 🐾</p>
-{% endif %}
 
-<form
-    id="comment-form"
-    action="{% url 'blog:comment' post.id %}"
-    method="POST"
->
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Meow!">
-</form>
+{% include "./comment_list_fragment.html" %}
 {% endblock %}

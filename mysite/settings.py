@@ -27,6 +27,10 @@ DEBUG = "DEBUG" in os.environ
 # something in release version, and they might be slightly separate
 DEV_MODE = "DEVMODE" in os.environ
 DJDT = "DJDT" in os.environ
+# NOTE: it's a hack, yes
+# - If `test` is in `sys.argv`, it was probably run as `manage.py test` hence
+# we're in testing
+TESTING = "test" in sys.argv
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ["SECRET_KEY"]
@@ -211,7 +215,7 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 
 
 # run tests against sqlite3
-if "test" in sys.argv:
+if TESTING:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -270,12 +274,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-if not DEBUG and "test" not in sys.argv:
+if not DEBUG and not TESTING:
     # that's what WhiteNoise and render.io recommend
     # if used with `manage.py collectstatic`
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
-if not DEBUG and "test" not in sys.argv:
     STORAGES = {
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
