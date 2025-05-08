@@ -1,14 +1,13 @@
 services:
   db:
-    image: postgres
+    image: postgres:17.4-alpine3.21
     restart: always
     # postgres needs more shared memory, MOAR
     shm_size: 128mb
     ports:
       - 127.0.0.1:5432:5432
     volumes:
-      - database:/var/lib/postgresql/data
-      #- test_database:/var/lib/postgresql/data
+      - database_volume:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
@@ -61,5 +60,4 @@ services:
       - 127.0.0.1:8080:8080
 
 volumes:
-  database:
-    #test_database:
+  database_volume:
