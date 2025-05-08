@@ -22,7 +22,7 @@ print_yellow() {
 
 if [ -z "${1:-}" ]
 then
-    print_red "provide container's name as a first argument, error"
+    print_red "provide DB container's name as a first argument, error"
     docker container list
     print_yellow "note: you need NAMES, that's the last column"
     exit 1
@@ -36,6 +36,12 @@ then
     exit 1
 else
     dump_sql="$2"
+fi
+
+if [[ "$dump_sql" == *':'* ]]
+then
+    print_red "dump sql path must not have ':' in it, it won't work :("
+    exit 1
 fi
 
 print_green "loading the script to the container..."
