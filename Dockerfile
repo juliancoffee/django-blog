@@ -2,7 +2,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-alpine
 
 # Don't cache index to reduce size
 # Btw, the reason why I install bash is that I can use time command in scripts
-RUN apk add --no-cache bash
+RUN apk add --no-cache bash dumb-init
 #RUN apk add --no-cache neovim
 
 # So I don't actually know if I need to do any of that, really
@@ -75,4 +75,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 # fyi, it takes about 2 seconds on my machine at the time of writing
 #RUN python manage.py collectstatic --no-input
 
-ENTRYPOINT ["/bin/bash", "scripts/entrypoint_docker.sh"]
+ENTRYPOINT ["dumb-init", "--", "/bin/bash", "scripts/entrypoint_docker.sh"]
