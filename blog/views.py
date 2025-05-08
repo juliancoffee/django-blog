@@ -29,6 +29,13 @@ class PostDetail(TypedDict):
 
 
 def post_data() -> Sequence[PostDetail]:
+    """
+    Eagerly fetch post data for all posts
+
+    # NOTE
+    This will probably sidestep the QuerySet cache, so don't
+    call this function twice without need, just use the given result.
+    """
     return [
         {
             "id": post_id,
@@ -93,11 +100,9 @@ class PostView(FormView):
         Create a new post and render the new post list
         """
         text = form.cleaned_data["post"]
-        date = timezone.now()
 
         # create the post
-        post = Post(post_text=text, pub_date=date)
-        post.save()
+        Post.create_now(post_text=text)
 
         # re-fetch comments and render the _new_ form
         context = self.get_context_data(**self.kwargs)
@@ -111,7 +116,13 @@ class CommentDetail(TypedDict):
 
 
 def comment_data(post_id: int) -> Sequence[CommentDetail]:
-    # eagerly evaluate to control when it runs
+    """
+    Eagerly fetch comment data for post with `post_id`
+
+    # NOTE
+    This will probably sidestep the QuerySet cache, so don't
+    call this function twice without need, just use the given result.
+    """
     return [
         {
             "author_username": username,
@@ -190,14 +201,13 @@ class CommentView(FormView):
         # INFO:
         # Using this and not `Post.get(pk=post).comment_set` to avoid separate
         # query
-        comment = Comment(
+        Comment.objects.create(
             post_id=post_id,
             comment_text=form.cleaned_data["comment"],
             pub_date=timezone.now(),
             commenter=user,
             commenter_ip=get_user_ip(self.request),
         )
-        comment.save()
 
         # re-fetch comments and render the _new_ form
         context = self.get_context_data(**self.kwargs)
