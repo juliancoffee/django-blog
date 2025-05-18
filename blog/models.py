@@ -44,6 +44,7 @@ def subscriber_emails(post: Post) -> Iterable[NotificationInfo]:
     query_subscribers = Subscription.objects.filter(
         to_engaged_posts=True
     ).values_list("user")
+
     # WARN: we don't filter whether the update is because of subscriber
     # comment
     query_commenters = Comment.objects.filter(post_id=post.id).values_list(

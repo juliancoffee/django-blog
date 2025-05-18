@@ -12,7 +12,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from blog.models import Post
+from blog.models import Comment, Post
 
 from .forms import SubscribeForm
 from .models import Subscription
@@ -225,56 +225,57 @@ class IntegrationTests(TestCase):
         self.assertTrue(form.instance.to_engaged_posts)
 
 
+def new_subscribed_to(
+    username: str,
+    *,
+    email: str | None = None,
+    password: str = "password123",
+    to_new_posts: bool = False,
+    to_engaged_posts: bool = False,
+):
+    user = User.objects.create_user(
+        username=username,
+        email=email,
+        password=password,
+    )
+    Subscription.objects.create(
+        user=user,
+        to_new_posts=to_new_posts,
+        to_engaged_posts=to_engaged_posts,
+    )
+
+    return user
+
+
 @override_settings(
     DEFAULT_FROM_EMAIL="test@example.com",
 )
 class NotificationEmailTests(TestCase):
     """Test email notifications sent when posts are created or updated."""
 
+    def assertEmailsEqual(self, emails_to: list[str]):
+        # Get the recipient emails from the sent messages
+        recipient_emails = sorted(msg.to for msg in mail.outbox)
+        expected = sorted([email] for email in emails_to)
+
+        # Verify that both new post subscribers received emails
+        # And it doesn't list other subscribers
+        self.assertSequenceEqual(
+            recipient_emails,
+            expected,
+        )
+
     @override
     def setUp(self):
         """Set up test data."""
-        # Subscribers to new posts
-        self.new_post_subscriber1 = User.objects.create_user(
-            username="new_sub1",
-            email="newsub1@example.com",
-            password="password123",
-        )
-        self.new_post_subscriber2 = User.objects.create_user(
-            username="new_sub2",
-            email="newsub2@example.com",
-            password="password123",
-        )
 
-        # Subscribers to engaged posts (needs to have commented)
-        self.engaged_subscriber = User.objects.create_user(
-            username="engaged_sub",
-            email="engagedsub@example.com",
-            password="password123",
-        )
+        # Add non subscribed user as control/canary
+        self.nonsub = new_subscribed_to("nonsub", email="nonsub@example.com")
 
-        # Non-subscriber for control
-        self.non_subscriber = User.objects.create_user(
-            username="nonsub",
-            email="nonsub@example.com",
-            password="password123",
-        )
-
-        # Create subscriptions
-        Subscription.objects.create(
-            user=self.new_post_subscriber1,
-            to_new_posts=True,
-            to_engaged_posts=False,
-        )
-        Subscription.objects.create(
-            user=self.new_post_subscriber2,
-            to_new_posts=True,
-            to_engaged_posts=False,
-        )
-        Subscription.objects.create(
-            user=self.engaged_subscriber,
-            to_new_posts=False,
-            to_engaged_posts=True,
+        # Add starter post to comment on
+        self.starter_post = Post.objects.create(
+            post_text="Starter post",
+            pub_date=timezone.now(),
         )
 
         # Clear the email outbox before each test
@@ -282,6 +283,17 @@ class NotificationEmailTests(TestCase):
 
     def test_new_post_notification(self):
         """Test that new post notifications are sent"""
+        # Create subscribers
+        new_post_subscriber = new_subscribed_to(
+            "new_sub", email="newsub1@example.com", to_new_posts=True
+        )
+        all_post_subscriber = new_subscribed_to(
+            "new_sub2",
+            email="newsub2@example.com",
+            to_engaged_posts=True,
+            to_new_posts=True,
+        )
+
         # Create a new post
         post = Post.objects.create(
             post_text="This is a new post that should trigger notifications",
@@ -290,20 +302,11 @@ class NotificationEmailTests(TestCase):
 
         # Check that emails were sent, one for each subscriber
         self.assertEqual(len(mail.outbox), 2)
-
-        # Get the recipient emails from the sent messages
-        recipient_emails = [msg.to for msg in mail.outbox]
-
-        # Verify that both new post subscribers received emails
-        # And it doesn't list other subscribers
-        self.assertSequenceEqual(
-            sorted(
-                [
-                    [self.new_post_subscriber1.email],
-                    [self.new_post_subscriber2.email],
-                ]
-            ),
-            sorted(recipient_emails),
+        self.assertEmailsEqual(
+            [
+                new_post_subscriber.email,
+                all_post_subscriber.email,
+            ]
         )
 
         # Check email content
@@ -311,3 +314,66 @@ class NotificationEmailTests(TestCase):
         for msg in mail.outbox:
             self.assertEqual(msg.subject, "Such Subject")
             self.assertIn(post.post_text[:30], msg.body)
+
+    def test_non_email_email(self):
+        """Test that emails to non-email users aren't sent"""
+        _mistaken_subscriber = new_subscribed_to(
+            username="engaged_sub",
+            email=None,
+            to_new_posts=True,
+        )
+
+        _post = Post.objects.create(
+            post_text="This is a new post that should trigger notifications",
+            pub_date=timezone.now(),
+        )
+
+        # Check that no emails were sent
+        self.assertSequenceEqual(mail.outbox, [])
+
+    def test_update_emails(self):
+        enaged_sub = new_subscribed_to(
+            "new_sub2",
+            email="newsub2@example.com",
+            to_engaged_posts=True,
+        )
+
+        # Update the post
+        Comment.objects.create(
+            post_id=self.starter_post.id,
+            comment_text="hi there",
+            pub_date=timezone.now(),
+        )
+
+        # Check that emails were sent, exactly one
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEmailsEqual([enaged_sub.email])
+
+    def test_no_duplicated_emails(self):
+        """Test that emails don't duplicate"""
+        # Create subscribers
+        new_post_subscriber = new_subscribed_to(
+            "new_sub", email="newsub1@example.com", to_new_posts=True
+        )
+        all_post_subscriber = new_subscribed_to(
+            "new_sub2",
+            email="newsub2@example.com",
+            to_engaged_posts=True,
+            to_new_posts=True,
+        )
+
+        # Update the post
+        Comment.objects.create(
+            post_id=self.starter_post.id,
+            comment_text="hi there",
+            pub_date=timezone.now(),
+        )
+
+        # Check that emails were sent, one for each subscriber
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEmailsEqual(
+            [
+                new_post_subscriber.email,
+                all_post_subscriber.email,
+            ]
+        )
