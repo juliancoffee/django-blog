@@ -7,14 +7,17 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Post
+from .utils import MAX_POST_LENGTH
 from .utils.easter_egg import PredictionGenerator
+from .views import PostDetail
 
 # Create your tests here
 
 
-def create_post(post_text: str, *, delay_days: int = 0) -> Post:
+def create_post(post_text: str, *, delay_days: int = 0) -> PostDetail:
     time = timezone.now() + datetime.timedelta(days=delay_days)
-    return Post.objects.create(post_text=post_text, pub_date=time)
+    post = Post.objects.create(post_text=post_text, pub_date=time)
+    return {"id": post.id, "post_text": post.post_text}
 
 
 class PostIndexViewTests(TestCase):
@@ -35,14 +38,18 @@ class PostIndexViewTests(TestCase):
         #
         # p. p. p. s, I like this line much more than previous one, but
         # god it's looking into implementation so much
-        self.assertQuerySetEqual(response.context["post_list"], [])
+        #
+        # UPD: me from the future, yes, I needed to update this line
+        # because I renamed the context variable.
+        # That's the complexity of testing job, I guess.
+        self.assertQuerySetEqual(response.context["posts"], [])
 
     def test_past_post(self):
         """posts with past pub_date are displayed"""
         post = create_post("hi there", delay_days=-30)
         r = self.client.get(reverse("blog:index"))
         self.assertQuerySetEqual(
-            r.context["post_list"],
+            r.context["posts"],
             [post],
         )
 
@@ -52,7 +59,7 @@ class PostIndexViewTests(TestCase):
         r = self.client.get(reverse("blog:index"))
         self.assertContains(r, "Nothing to see here.")
         self.assertQuerySetEqual(
-            r.context["post_list"],
+            r.context["posts"],
             [],
         )
 
@@ -65,7 +72,7 @@ class PostIndexViewTests(TestCase):
         create_post("future post", delay_days=30)
         r = self.client.get(reverse("blog:index"))
         self.assertQuerySetEqual(
-            r.context["post_list"],
+            r.context["posts"],
             [past_post],
         )
 
@@ -80,7 +87,7 @@ class PostIndexViewTests(TestCase):
         # ChatGPT didn't generate correct code, because how would it knew
         # but it did mention that such problem may arise
         self.assertQuerySetEqual(
-            r.context["post_list"],
+            r.context["posts"],
             [post2, post1],
         )
 
@@ -176,7 +183,9 @@ i imagine it would be annoying to change all these if I rename\
     def test_post_too_long_must_fail(self):
         """Too much characters must fail"""
         with self.assertRaises(ValidationError):
-            Post(post_text="*" * 501, pub_date=timezone.now()).full_clean()
+            Post(
+                post_text="*" * (MAX_POST_LENGTH + 1), pub_date=timezone.now()
+            ).full_clean()
 
     def test_post_complicated_length(self):
         # ok, I tried to insert composite emoji here to test the length

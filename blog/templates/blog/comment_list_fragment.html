@@ -1,0 +1,47 @@
+{# for use with htmx, not a full document #}
+{% load str_extras %}
+
+<div id="comments">
+    {% if comments %}
+        <ul>
+            {% for comment in comments %}
+                <li>
+                    <!-- commenter name -->
+                    {% if comment.author_username %}
+                        [{{ comment.author_username }}]
+                    {% else %}
+                        [unknown]
+                    {% endif %}
+                    <!-- comment text itself -->
+                    {% if comment.comment_text|is_multiline %}
+                        <pre>{{ comment.comment_text }}</pre>
+                    {% else %}
+                        {{ comment.comment_text }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No comments yet 🐾</p>
+    {% endif %}
+
+    {% if form.errors %}
+        {{ form.errors }}
+    {% endif %}
+
+    <form
+        class="column-form"
+        id="comment-form"
+        hx-post="{% url 'blog:handle_comment' post.id %}"
+        hx-target="#comments"
+    >
+        {% csrf_token %}
+
+        {% for field in form %}
+            {# move errors to top level #}
+            {{ field }}
+        {% endfor %}
+
+        <input type="submit" value="Meow!">
+    </form>
+</div>

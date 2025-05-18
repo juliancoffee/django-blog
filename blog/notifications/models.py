@@ -1,4 +1,6 @@
 # Create your models here.
+from typing import override
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -10,5 +12,6 @@ class Subscription(models.Model):
     to_new_posts = models.BooleanField(default=False)
     to_engaged_posts = models.BooleanField(default=False)
 
+    @override
     def __str__(self):
         return f"For {self.user.username}"
