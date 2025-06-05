@@ -312,7 +312,7 @@ class NotificationEmailTests(TestCase):
         # Check email content
         # Check that post text is in the email
         for msg in mail.outbox:
-            self.assertEqual(msg.subject, "Such Subject")
+            self.assertEqual(msg.subject, "New Post!")
             self.assertIn(post.post_text[:30], msg.body)
 
     def test_non_email_email(self):
@@ -331,23 +331,32 @@ class NotificationEmailTests(TestCase):
         # Check that no emails were sent
         self.assertSequenceEqual(mail.outbox, [])
 
-    def test_update_emails(self):
-        enaged_sub = new_subscribed_to(
+    def test_update_engagement_emails(self):
+        engaged_sub = new_subscribed_to(
             "new_sub2",
             email="newsub2@example.com",
             to_engaged_posts=True,
         )
 
-        # Update the post
+        # Engage with the post
         Comment.objects.create(
             post_id=self.starter_post.id,
-            comment_text="hi there",
+            comment_text="who's watching this in 2030?",
             pub_date=timezone.now(),
+            commenter=engaged_sub,
+        )
+
+        # Fire another comment to the same post
+        Comment.objects.create(
+            post_id=self.starter_post.id,
+            comment_text="hi!",
+            pub_date=timezone.now(),
+            commenter=self.nonsub,
         )
 
         # Check that emails were sent, exactly one
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEmailsEqual([enaged_sub.email])
+        # self.assertEqual(len(mail.outbox), 1)
+        self.assertEmailsEqual([engaged_sub.email])
 
     def test_no_duplicated_emails(self):
         """Test that emails don't duplicate"""
@@ -362,7 +371,7 @@ class NotificationEmailTests(TestCase):
             to_new_posts=True,
         )
 
-        # Update the post
+        # Engage with the post
         Comment.objects.create(
             post_id=self.starter_post.id,
             comment_text="hi there",

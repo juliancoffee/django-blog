@@ -3,7 +3,8 @@ from __future__ import annotations
 import datetime
 import logging
 from collections.abc import Iterable, Iterator
-from typing import override
+from dataclasses import dataclass
+from typing import assert_never, override
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -17,21 +18,44 @@ from .utils import MAX_COMMENT_LENGTH, MAX_POST_LENGTH
 
 logger = logging.getLogger(__name__)
 
-
 type EmailStr = str
 type Username = str
 type UserId = int
 type NotificationInfo = tuple[EmailStr, Username, UserId]
-TEXT_CROP_LEN = 30
 
 
-def subscriber_emails(post: Post) -> Iterable[NotificationInfo]:
+@dataclass
+class PostUpdate:
+    """
+    Signifies update to the post itself
+    """
+
+    post: Post
+
+    pass
+
+
+@dataclass
+class CommentUpdate:
+    """
+    Signifies update to the comment
+    """
+
+    post: Post
+    comment: Comment
+
+
+type NotificationReason = PostUpdate | CommentUpdate
+
+
+def subscriber_emails(reason: NotificationReason) -> Iterable[NotificationInfo]:
     """
     Returns a list of people subscribed to the post
     """
 
+    post = reason.post
     # fetch everyone who is subscribed to new posts
-    # WARN: we don't filter new posts vs updates to posts
+    # WARN: we don't differentiate new posts and updates to posts (such as comments)
     because_new = (
         Subscription.objects.filter(to_new_posts=True)
         .select_related("user")
@@ -45,8 +69,6 @@ def subscriber_emails(post: Post) -> Iterable[NotificationInfo]:
         to_engaged_posts=True
     ).values_list("user")
 
-    # WARN: we don't filter whether the update is because of subscriber
-    # comment
     query_commenters = Comment.objects.filter(post_id=post.id).values_list(
         "commenter"
     )
@@ -55,16 +77,38 @@ def subscriber_emails(post: Post) -> Iterable[NotificationInfo]:
     # get emails
     subscribers = because_new.union(because_engaged)
 
-    # NOTE: this whole function is one single DB query, yay
-    return User.objects.filter(id__in=subscribers).values_list(
-        "email", "username", "id"
+    match reason:
+        case CommentUpdate(post, comment) if comment.commenter:
+            authors = [comment.commenter.id]
+        case _:
+            authors = []
+
+    subs = (
+        User.objects.filter(id__in=subscribers)
+        .exclude(id__in=authors)
+        .values_list("email", "username", "id")
     )
+
+    # NOTE: this whole function is one single DB query, yay
+    return subs
+
+
+def send_notifications(reason: NotificationReason) -> None:
+    pub_date = reason.post.pub_date
+
+    if pub_date > timezone.now():
+        # FIXME: delayed posts won't receive any notifications
+        #
+        # not sure how to fix it without some complicated machinery
+        pass
+
+    emails_to = subscriber_emails(reason)
+    send_notifications_to(emails_to, reason)
 
 
 def send_notifications_to(
     emails_to: Iterable[NotificationInfo],
-    post_text: str,
-    date: datetime.datetime,
+    reason: NotificationReason,
 ):
     """
     Sends post notifications
@@ -74,35 +118,53 @@ def send_notifications_to(
         logger.info("No users to send notifications to.")
         return
 
-    if len(post_text) < TEXT_CROP_LEN:
-        text = post_text
-    else:
-        text = f"{post_text[:TEXT_CROP_LEN]}..."
-
-    def filter_emails(
+    def filtermap_emails(
         emails_to: Iterable[NotificationInfo],
     ) -> Iterator[tuple[str, str, EmailStr, list[EmailStr]]]:
         """
         `filter_map` to output email message and filter out empty emails
         """
         for email, username, user_id in emails_to:
-            if email:
-                yield (
-                    "Such Subject",
-                    f"Hi, {username}, check out our post update!\n{date}\n{text}",
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                )
-            else:
+            if not email:
                 logger.error(
                     f"Attempted to send an email to user {username} {user_id=}"
                     " but we don't know their email"
                 )
-                pass
+                continue
+
+            match reason:
+                case PostUpdate(post):
+                    email_text = (
+                        f"Hi, {username}, check out our post update!"
+                        f"\n{post.pub_date}"
+                        f"\n{post.post_text}"
+                    )
+
+                    yield (
+                        "New Post!",
+                        email_text,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                    )
+                case CommentUpdate(post, comment):
+                    email_text = (
+                        f"Hi, {username}, check out the new comment!"
+                        f"\n{comment.pub_date}"
+                        f"\n{comment.comment_text}"
+                    )
+
+                    yield (
+                        "New Comment!",
+                        email_text,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                    )
+                case r:
+                    assert_never(r)
 
     # NOTE: use send_mass_mail here and not a send_mail to send multiple emails
     # with each having their own target
-    send_mass_mail(filter_emails(emails_to))
+    send_mass_mail(filtermap_emails(emails_to))
 
 
 class Post(models.Model):
@@ -119,24 +181,11 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
         # hook notifications in
-        self.send_notifications()
+        send_notifications(PostUpdate(self))
 
     @staticmethod
     def create_now(post_text: str) -> Post:
         return Post.objects.create(post_text=post_text, pub_date=timezone.now())
-
-    def send_notifications(self) -> None:
-        post_text = self.post_text
-        pub_date = self.pub_date
-
-        if pub_date > timezone.now():
-            # FIXME: delayed posts won't receive any notifications
-            #
-            # not sure how to fix it without some complicated machinery
-            pass
-
-        emails_to = subscriber_emails(self)
-        send_notifications_to(emails_to, post_text, pub_date)
 
     def was_published_recently(self) -> bool:
         # this is a stupid method, but Django tutorial said that I should
@@ -172,3 +221,11 @@ class Comment(models.Model):
     @override
     def __str__(self) -> str:
         return self.comment_text
+
+    @override
+    def save(self, *args, **kwargs) -> None:
+        # call the default impl
+        super().save(*args, **kwargs)
+
+        # hook notifications in
+        send_notifications(CommentUpdate(self.post, self))
