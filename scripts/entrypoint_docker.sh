@@ -21,6 +21,7 @@ export DEBUG=1
 # I want to have DEVMODE separate from DEBUG in cases when I need to reproduce
 # something in release version, and they might be slightly different
 export DEVMODE=1
+export DEBUGPY=1
 
 #export CONSOLE_LOG_LEVEL=INFO # default is DEBUG
 export PYLOG_LEVEL=DEBUG # default is INFO
@@ -35,7 +36,15 @@ echo "" > debug.log
 # NOTE: use `exec` here to seize control, helps if you wanna Ctrl+C
 #
 # runserver has a better hot-reload, so that's what we use
-exec python manage.py runserver 0.0.0.0:8000
+if [ "$DEBUGPY" ]
+then
+    exec python \
+        -Xfrozen_modules=off \
+        -m debugpy --listen 0.0.0.0:5678 \
+        manage.py runserver 0.0.0.0:8000 --noreload --nothreading
+else
+    exec python manage.py runserver 0.0.0.0:8000
+fi
 #exec gunicorn mysite.wsgi \
     #--bind 0.0.0.0:8000 \
     #--reload \

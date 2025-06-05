@@ -21,7 +21,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
-          version: "0.5.7"
+          version: "0.6.16"
 
       - name: Generate dependency file
         run: uv export --format requirements-txt > requirements_lock_new.txt

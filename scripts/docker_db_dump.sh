@@ -22,7 +22,7 @@ print_yellow() {
 
 if [ -z "${1:-}" ]
 then
-    print_red "provide container's name as a first argument, error"
+    print_red "provide DB container's name as a first argument, error"
     docker container list
     print_yellow "note: you need NAMES, that's the last column"
     exit 1
@@ -40,17 +40,13 @@ print_green "executing..."
 docker exec "$container" bash backup.sh
 
 print_green "copying the result..."
-if [ -z "${2:-}" ]
-then
-    res="dump$(date -Iseconds).sql"
-else
-    res="$2"
-fi
+# use $2 or default to .. whatever is after `-`
+res="${2:-dump$(date -Iseconds | tr ':' '-').sql}"
 
 if [ -f "$res" ]
 then
     echo "you sure you want to overwrite the file? y/N"
-    # shellcheck made me add `-r`
+    # Shellcheck made me add `-r` here
     # it allows backslashes to appear in the input without escaping them
     read -r answer
     case "$answer" in
@@ -62,6 +58,7 @@ then
             ;;
     esac
 fi
+
 docker cp "$container":dump.sql - | tar -x --to-stdout > "$res"
 
 print_green "protecting from writes..."

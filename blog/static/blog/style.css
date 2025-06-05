@@ -3,7 +3,13 @@
     --red: #662b2b;
 }
 
-h1, a, li, p, pre, span, form label {
+h1,
+a,
+li,
+p,
+pre,
+span,
+form label {
     background: var(--pink);
 }
 
@@ -20,14 +26,6 @@ body {
     background: white url("images/paw-mushroom-40.png");
 }
 
-#comment-form {
-    display: flex;
-}
-
-#comment-form * {
-    margin: 0.1rem;
-}
-
 .list-form {
     /* center the content inside
      *
@@ -38,10 +36,24 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
+    & input[type="submit"],
+    button {
+        background: white;
+    }
 }
 
-.list-form input[type="submit"], button {
-    background: white;
+.column-form {
+    /*
+     * like list-form, but without center alignment
+     */
+    display: flex;
+    flex-direction: column;
+    max-width: 30%;
+
+    & * {
+        margin: 0.1rem;
+    }
 }
 
 header {
